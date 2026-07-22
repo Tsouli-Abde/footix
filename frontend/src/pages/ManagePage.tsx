@@ -1,19 +1,18 @@
 import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
+import { AnswerList } from '../components/AnswerList';
 import { CopyLink } from '../components/CopyLink';
-import { EventHeader, WinnerBanner } from '../components/EventHeader';
-import { OptionsEditor, type OptionDraft } from '../components/OptionsEditor';
-import { VoteTable } from '../components/VoteTable';
+import { EventHeader } from '../components/EventHeader';
+import { VenueCard } from '../components/VenueCard';
 import { Alert, Button, Card, Field, inputClass, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
-import { toDateTimeLocal } from '../lib/dates';
-import { leadingOption } from '../lib/votes';
+import { toDateInput, toDateTimeLocal } from '../lib/dates';
 import type { FootixEvent } from '../types';
 
 /**
- * Vue organisateur. La possession du lien fait office d'autorisation : il ouvre
- * l'édition et la clôture depuis n'importe quel appareil, sans compte.
+ * Vue organisateur. Avoir le lien suffit à gérer le sondage depuis n'importe
+ * quel appareil, sans compte.
  */
 export function ManagePage() {
   const { organizerToken = '' } = useParams();
@@ -27,8 +26,6 @@ export function ManagePage() {
 
   if (!event) return <PageState loading={loading} error={error} />;
 
-  const leader = leadingOption(event.options);
-
   const run = async (action: () => Promise<FootixEvent>) => {
     setActionError(null);
     try {
@@ -38,11 +35,8 @@ export function ManagePage() {
     }
   };
 
-  const removeParticipant = (participantId: string) =>
-    void run(() => api.removeParticipant(event.publicToken, participantId));
-
   const remove = async () => {
-    if (!window.confirm('Supprimer définitivement ce sondage et tous ses votes ?')) return;
+    if (!window.confirm('Supprimer ce sondage et toutes les réponses ?')) return;
     try {
       await api.deleteEvent(organizerToken);
       navigate('/', { replace: true });
@@ -54,39 +48,31 @@ export function ManagePage() {
   return (
     <div className="space-y-6">
       <EventHeader event={event} />
-      <WinnerBanner event={event} />
+      <VenueCard event={event} />
 
       {actionError && <Alert>{actionError}</Alert>}
 
       <Card className="space-y-4">
-        <CopyLink
-          path={`/e/${event.publicToken}`}
-          label="Lien participant"
-          hint="C’est celui-ci qu’on partage sur Teams."
-        />
+        <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" hint="Celui qu’on colle sur Teams." />
         <CopyLink
           path={`/manage/${organizerToken}`}
-          label="Lien organisateur"
-          hint="Garde-le pour toi : il permet de modifier et de clôturer le vote."
+          label="Ton lien de gestion"
+          hint="Garde-le pour toi, il permet de clôturer et de modifier."
         />
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-semibold">Résultats</h2>
-        <VoteTable
-          event={event}
-          highlightOptionId={event.winningOptionId ?? leader?.id}
-          onRemoveParticipant={event.votingOpen ? removeParticipant : undefined}
-        />
+        <h2 className="mb-4 text-lg font-semibold">Qui vient</h2>
+        <AnswerList event={event} onRemove={event.votingOpen ? (id) => void run(() => api.removeParticipant(event.publicToken, id)) : undefined} />
       </Card>
 
       {event.status === 'ouvert' ? (
-        <CloseCard event={event} leaderId={leader?.id ?? null} onClose={(id) => run(() => api.closeEvent(organizerToken, id))} />
+        <CloseCard event={event} onClose={(venueId) => void run(() => api.closeEvent(organizerToken, venueId))} />
       ) : (
         <Card className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-600">Le vote est clôturé. Tu peux le rouvrir si c’était prématuré.</p>
+          <p className="text-sm text-slate-600">Le sondage est clôturé. Tu peux le rouvrir si tu as été trop vite.</p>
           <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
-            Rouvrir le vote
+            Rouvrir
           </Button>
         </Card>
       )}
@@ -103,7 +89,7 @@ export function ManagePage() {
       ) : (
         <div className="flex flex-wrap gap-3">
           <Button variant="secondary" onClick={() => setEditing(true)}>
-            Modifier le sondage
+            Modifier
           </Button>
           <Button variant="danger" onClick={remove}>
             Supprimer
@@ -114,34 +100,30 @@ export function ManagePage() {
   );
 }
 
-/** Clôture : l'organisateur tranche lui-même, l'option en tête n'est qu'une suggestion. */
-function CloseCard({
-  event,
-  leaderId,
-  onClose,
-}: {
-  event: FootixEvent;
-  leaderId: string | null;
-  onClose: (winningOptionId: string | null) => void;
-}) {
-  const [choice, setChoice] = useState(leaderId ?? '');
+/** Clôture : l'app conseille un lieu, l'organisateur valide ou choisit autre chose. */
+function CloseCard({ event, onClose }: { event: FootixEvent; onClose: (venueId: string | null) => void }) {
+  const suggested = event.recommendation.venue?.id ?? '';
+  const [choice, setChoice] = useState(suggested);
 
   return (
     <Card className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Clôturer le vote</h2>
+        <h2 className="text-lg font-semibold">Clôturer</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Choisis l’option retenue et annonce-la. Rien n’est décidé automatiquement.
+          {event.recommendation.venue
+            ? `L’app propose ${event.recommendation.venue.label}, mais tu décides.`
+            : 'Choisis le lieu, ou clôture sans si le match tombe à l’eau.'}
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <Field label="Option retenue">
-          <select value={choice} onChange={(e) => setChoice(e.target.value)} className={`${inputClass} sm:w-72`}>
-            <option value="">Aucune (match annulé)</option>
-            {event.options.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label} — {option.counts.oui} oui, {option.counts.si_besoin} si besoin
+        <Field label="On joue où">
+          <select value={choice} onChange={(e) => setChoice(e.target.value)} className={`${inputClass} sm:w-80`}>
+            <option value="">Nulle part, match annulé</option>
+            {event.venues?.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.label}
+                {venue.id === suggested ? ' (conseillé)' : ''}
               </option>
             ))}
           </select>
@@ -158,32 +140,23 @@ function EditCard({
   onCancel,
 }: {
   event: FootixEvent;
-  onSave: (input: {
-    title: string;
-    description: string | null;
-    matchDate: string;
-    voteDeadline: string;
-    options: OptionDraft[];
-  }) => void;
+  onSave: (input: { title: string; description: string | null; matchDate: string; voteDeadline: string }) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? '');
-  const [matchDate, setMatchDate] = useState(toDateTimeLocal(new Date(event.matchDate)));
+  const [matchDate, setMatchDate] = useState(toDateInput(new Date(event.matchDate)));
   const [voteDeadline, setVoteDeadline] = useState(toDateTimeLocal(new Date(event.voteDeadline)));
-  const [options, setOptions] = useState<OptionDraft[]>(
-    event.options.map((option) => ({ id: option.id, label: option.label, capacity: option.capacity })),
-  );
 
   return (
     <Card className="space-y-5">
-      <h2 className="text-lg font-semibold">Modifier le sondage</h2>
+      <h2 className="text-lg font-semibold">Modifier</h2>
 
       <Field label="Titre">
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={inputClass} />
       </Field>
 
-      <Field label="Description">
+      <Field label="Précision">
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -194,15 +167,10 @@ function EditCard({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Date et heure du match">
-          <input
-            type="datetime-local"
-            value={matchDate}
-            onChange={(e) => setMatchDate(e.target.value)}
-            className={inputClass}
-          />
+        <Field label="Jour du match" hint="L’heure reste midi.">
+          <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className={inputClass} />
         </Field>
-        <Field label="Fin des votes">
+        <Field label="Fin des réponses">
           <input
             type="datetime-local"
             value={voteDeadline}
@@ -212,24 +180,17 @@ function EditCard({
         </Field>
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">Options</p>
-        <OptionsEditor options={options} onChange={setOptions} warnOnRemove />
-      </div>
-
       <div className="flex gap-3">
         <Button
-          onClick={() =>
+          onClick={() => {
+            const [year, month, day] = matchDate.split('-').map(Number);
             onSave({
               title: title.trim(),
               description: description.trim() || null,
-              matchDate: new Date(matchDate).toISOString(),
+              matchDate: new Date(year, month - 1, day, 12, 0, 0, 0).toISOString(),
               voteDeadline: new Date(voteDeadline).toISOString(),
-              options: options
-                .filter((option) => option.label.trim())
-                .map((option) => ({ ...option, label: option.label.trim() })),
-            })
-          }
+            });
+          }}
         >
           Enregistrer
         </Button>

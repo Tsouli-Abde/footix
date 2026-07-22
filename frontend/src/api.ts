@@ -1,6 +1,6 @@
-import type { EventSummary, FootixEvent, RecurrenceTemplate, VoteValue } from './types';
+import type { Availability, EventSummary, FootixEvent, RecurrenceTemplate } from './types';
 
-/** En dev, Vite proxifie /api vers le backend ; en prod, nginx fait la même chose. */
+/** En dev, Vite proxifie /api vers le backend. En prod, nginx fait la même chose. */
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 /** Erreur renvoyée par l'API, avec le détail exploitable par l'UI. */
@@ -32,15 +32,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export type CreateEventInput = {
-  title: string;
-  description?: string | null;
   matchDate: string;
-  voteDeadline: string;
-  options: { label: string; capacity?: number | null }[];
-};
-
-export type UpdateEventInput = Partial<CreateEventInput> & {
-  options?: { id?: string; label: string; capacity?: number | null }[];
+  title?: string;
+  description?: string | null;
+  voteDeadline?: string;
 };
 
 export const api = {
@@ -50,33 +45,32 @@ export const api = {
   createEvent: (input: CreateEventInput) =>
     request<{ event: FootixEvent }>('/events', { method: 'POST', body: JSON.stringify(input) }).then((r) => r.event),
 
-  getEvent: (publicToken: string) =>
-    request<{ event: FootixEvent }>(`/events/${publicToken}`).then((r) => r.event),
+  getEvent: (publicToken: string) => request<{ event: FootixEvent }>(`/events/${publicToken}`).then((r) => r.event),
 
-  submitVote: (publicToken: string, name: string, votes: { optionId: string; value: VoteValue }[]) =>
-    request<{ participantId: string; event: FootixEvent }>(`/events/${publicToken}/votes`, {
+  answer: (publicToken: string, name: string, availability: Availability) =>
+    request<{ participantId: string; event: FootixEvent }>(`/events/${publicToken}/answers`, {
       method: 'POST',
-      body: JSON.stringify({ name, votes }),
+      body: JSON.stringify({ name, availability }),
     }),
 
   removeParticipant: (publicToken: string, participantId: string) =>
-    request<{ event: FootixEvent }>(`/events/${publicToken}/votes/${participantId}`, { method: 'DELETE' }).then(
+    request<{ event: FootixEvent }>(`/events/${publicToken}/answers/${participantId}`, { method: 'DELETE' }).then(
       (r) => r.event,
     ),
 
   getManagedEvent: (organizerToken: string) =>
     request<{ event: FootixEvent }>(`/manage/${organizerToken}`).then((r) => r.event),
 
-  updateEvent: (organizerToken: string, input: UpdateEventInput) =>
+  updateEvent: (organizerToken: string, input: Partial<CreateEventInput>) =>
     request<{ event: FootixEvent }>(`/manage/${organizerToken}`, {
       method: 'PATCH',
       body: JSON.stringify(input),
     }).then((r) => r.event),
 
-  closeEvent: (organizerToken: string, winningOptionId: string | null) =>
+  closeEvent: (organizerToken: string, chosenVenue: string | null) =>
     request<{ event: FootixEvent }>(`/manage/${organizerToken}/close`, {
       method: 'POST',
-      body: JSON.stringify({ winningOptionId }),
+      body: JSON.stringify({ chosenVenue }),
     }).then((r) => r.event),
 
   reopenEvent: (organizerToken: string) =>

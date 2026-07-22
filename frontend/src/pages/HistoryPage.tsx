@@ -5,7 +5,7 @@ import { Card, PageState } from '../components/ui';
 import { formatShortDate } from '../lib/dates';
 import type { EventSummary } from '../types';
 
-/** Historique en lecture seule : où on a joué, et combien on était. */
+/** Où on a joué et combien on était, en lecture seule. */
 export function HistoryPage() {
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export function HistoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Historique</h1>
-        <p className="mt-1 text-sm text-slate-500">Les matchs déjà tranchés.</p>
+        <p className="mt-1 text-sm text-slate-500">Les matchs déjà passés.</p>
       </div>
 
       {events.length === 0 ? (
@@ -37,8 +37,8 @@ export function HistoryPage() {
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3 font-semibold">Date</th>
                 <th className="px-5 py-3 font-semibold">Match</th>
-                <th className="px-5 py-3 font-semibold">Option retenue</th>
-                <th className="px-5 py-3 text-right font-semibold">Votants</th>
+                <th className="px-5 py-3 font-semibold">Lieu</th>
+                <th className="px-5 py-3 text-right font-semibold">Présents</th>
               </tr>
             </thead>
             <tbody>
@@ -51,15 +51,15 @@ export function HistoryPage() {
                     </Link>
                   </td>
                   <td className="px-5 py-3">
-                    {event.winningOption ? (
-                      <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                        {event.winningOption.label}
+                    {event.chosenVenue ? (
+                      <span className="whitespace-nowrap rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                        {event.chosenVenue.label}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-400">Annulé</span>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-slate-600">{event.participantCount}</td>
+                  <td className="px-5 py-3 text-right tabular-nums text-slate-600">{event.counts.oui}</td>
                 </tr>
               ))}
             </tbody>

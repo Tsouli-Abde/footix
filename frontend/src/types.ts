@@ -1,22 +1,23 @@
 /** Miroir des réponses de l'API (backend/src/serializers.ts). */
 
-export const VOTE_VALUES = ['oui', 'si_besoin', 'non'] as const;
-export type VoteValue = (typeof VOTE_VALUES)[number];
+export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'non'] as const;
+export type Availability = (typeof AVAILABILITY_VALUES)[number];
 
-export type EventOption = {
+export type Counts = Record<Availability, number>;
+
+export type Venue = {
   id: string;
   label: string;
-  capacity: number | null;
-  position: number;
-  counts: Record<VoteValue, number>;
+  note: string;
+  /** Vrai pour le match contre une autre boîte, que les votants ne voient pas. */
+  organizerOnly?: boolean;
 };
 
-export type EventParticipant = {
+export type Participant = {
   id: string;
   name: string;
+  availability: Availability;
   createdAt: string;
-  /** Réponses indexées par id d'option. */
-  votes: Record<string, VoteValue>;
 };
 
 export type FootixEvent = {
@@ -28,14 +29,16 @@ export type FootixEvent = {
   voteDeadline: string;
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
-  winningOptionId: string | null;
-  publicToken: string;
   createdAt: string;
-  options: EventOption[];
-  participants: EventParticipant[];
+  publicToken: string;
+  counts: Counts;
+  recommendation: { venue: Venue | null; reason: string };
+  chosenVenue: Venue | null;
+  participants: Participant[];
   /** Présents uniquement sur la vue organisateur. */
   organizerToken?: string;
   recurrenceTemplateId?: string | null;
+  venues?: Venue[];
 };
 
 export type EventSummary = {
@@ -46,15 +49,9 @@ export type EventSummary = {
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
   publicToken: string;
+  counts: Counts;
   participantCount: number;
-  winningOption: { id: string; label: string } | null;
-};
-
-export type TemplateOption = {
-  id: string;
-  label: string;
-  capacity: number | null;
-  position: number;
+  chosenVenue: Venue | null;
 };
 
 export type RecurrenceTemplate = {
@@ -62,12 +59,10 @@ export type RecurrenceTemplate = {
   title: string;
   description: string | null;
   weekday: number;
-  matchTime: string;
   deadlineHoursBefore: number;
   leadTimeDays: number;
   active: boolean;
   createdAt: string;
-  options: TemplateOption[];
   nextMatchDate?: string;
   organizerToken?: string;
 };

@@ -16,13 +16,13 @@ export function Layout() {
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={navClass}>
-              Votes en cours
+              En cours
             </NavLink>
             <NavLink to="/historique" className={navClass}>
               Historique
             </NavLink>
             <NavLink to="/nouveau" className={navClass}>
-              Nouveau match
+              Nouveau
             </NavLink>
           </nav>
         </div>
@@ -33,7 +33,7 @@ export function Layout() {
       </main>
 
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-center text-xs text-slate-400">
-        Footix — pas de compte, juste un lien à partager.
+        Pas de compte, juste un lien à partager.
       </footer>
     </div>
   );

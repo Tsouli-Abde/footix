@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Footix — le foot du vendredi',
+        name: 'Footix, le foot du vendredi',
         short_name: 'Footix',
-        description: 'Organiser les matchs de foot entre collègues, sans compte ni prise de tête.',
+        description: 'Qui vient jouer vendredi ? On répond, et le lieu se décide tout seul.',
         lang: 'fr',
         theme_color: '#16a34a',
         background_color: '#f8fafc',

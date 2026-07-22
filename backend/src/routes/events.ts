@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { generateToken, occurrenceKeyFor } from '../domain.js';
+import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor } from '../domain.js';
 import { conflict, notFound, route } from '../http.js';
 import { createEventSchema } from '../schemas.js';
 import { eventInclude, serializeEvent, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
 export const eventsRouter = Router();
 
+const DEFAULT_TITLE = 'Foot vendredi ?';
+
 /**
- * Liste des événements, du plus proche au plus ancien.
- * `?status=ouvert` pour les votes en cours, `?status=cloture` pour l'historique.
+ * Liste des sondages, du plus récent au plus ancien.
+ * `?status=ouvert` pour ceux en cours, `?status=cloture` pour l'historique.
  */
 eventsRouter.get(
   '/events',
@@ -27,40 +29,38 @@ eventsRouter.get(
 );
 
 /**
- * Création d'un événement.
+ * Création d'un sondage.
  *
- * Anti-doublon : un seul événement par jour de match. Si un autre existe déjà,
- * on répond 409 avec l'événement en question pour que le frontend y redirige
- * plutôt que de laisser créer un sondage concurrent.
+ * Tout est optionnel sauf la date : sans titre on met "Foot vendredi ?", sans
+ * deadline on ferme la veille à 18h. L'idée est de pouvoir lancer un sondage
+ * sans rien remplir.
+ *
+ * Un seul sondage par jour. S'il en existe déjà un, on répond 409 avec celui-ci
+ * pour que le frontend y renvoie au lieu d'en créer un deuxième.
  */
 eventsRouter.post(
   '/events',
   route(async (req, res) => {
     const input = createEventSchema.parse(req.body);
-    const occurrenceKey = occurrenceKeyFor(input.matchDate);
+
+    const matchDate = atMatchHour(input.matchDate);
+    const occurrenceKey = occurrenceKeyFor(matchDate);
 
     const existing = await prisma.event.findUnique({ where: { occurrenceKey }, include: eventInclude });
     if (existing) {
-      throw conflict('Un événement existe déjà pour cette date', { event: serializeEventSummary(existing) });
+      throw conflict('Un sondage existe déjà pour ce jour', { event: serializeEventSummary(existing) });
     }
 
     const event = await prisma.event.create({
       data: {
-        title: input.title,
+        title: input.title?.trim() || DEFAULT_TITLE,
         description: input.description ?? null,
         type: 'ponctuel',
-        matchDate: input.matchDate,
+        matchDate,
         occurrenceKey,
-        voteDeadline: input.voteDeadline,
+        voteDeadline: input.voteDeadline ?? defaultDeadlineFor(matchDate),
         publicToken: generateToken(),
         organizerToken: generateToken(),
-        options: {
-          create: input.options.map((option, index) => ({
-            label: option.label,
-            capacity: option.capacity ?? null,
-            position: index,
-          })),
-        },
       },
       include: eventInclude,
     });
@@ -69,7 +69,7 @@ eventsRouter.post(
   }),
 );
 
-/** Vue publique : c'est le lien partagé sur Teams. */
+/** Vue publique, c'est le lien qu'on colle sur Teams. */
 eventsRouter.get(
   '/events/:publicToken',
   route(async (req, res) => {
@@ -77,7 +77,7 @@ eventsRouter.get(
       where: { publicToken: req.params.publicToken },
       include: eventInclude,
     });
-    if (!event) throw notFound('Événement introuvable');
+    if (!event) throw notFound('Sondage introuvable');
 
     res.json({ event: serializeEvent(event) });
   }),

@@ -1,42 +1,46 @@
 import type { Prisma } from '@prisma/client';
-import { VOTE_VALUES, type VoteValue, isVotingOpen } from './domain.js';
+import {
+  AVAILABILITY_VALUES,
+  isVenueId,
+  isVotingOpen,
+  recommendVenue,
+  VENUES,
+  type Availability,
+  type Counts,
+} from './domain.js';
 
-/** Ce qu'il faut charger pour afficher un événement complet (tableau de vote inclus). */
+/** Ce qu'il faut charger pour afficher un sondage complet. */
 export const eventInclude = {
-  options: { orderBy: { position: 'asc' } },
-  participants: {
-    orderBy: { createdAt: 'asc' },
-    include: { votes: true },
-  },
+  participants: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.EventInclude;
 
-export type EventWithRelations = Prisma.EventGetPayload<{ include: typeof eventInclude }>;
+export type EventWithParticipants = Prisma.EventGetPayload<{ include: typeof eventInclude }>;
 
-export const templateInclude = {
-  options: { orderBy: { position: 'asc' } },
-} satisfies Prisma.RecurrenceTemplateInclude;
+const emptyCounts = (): Counts => ({ oui: 0, si_besoin: 0, non: 0 });
 
-export type TemplateWithOptions = Prisma.RecurrenceTemplateGetPayload<{ include: typeof templateInclude }>;
-
-type VoteCounts = Record<VoteValue, number>;
-
-const emptyCounts = (): VoteCounts => ({ oui: 0, si_besoin: 0, non: 0 });
-
-/**
- * Vue publique d'un événement : tout ce dont la page de vote a besoin.
- * Le token organisateur n'y figure jamais — seul le lien de gestion le révèle.
- */
-export function serializeEvent(event: EventWithRelations) {
-  const countsByOption = new Map<string, VoteCounts>(event.options.map((option) => [option.id, emptyCounts()]));
-
+function countAnswers(event: EventWithParticipants): Counts {
+  const counts = emptyCounts();
   for (const participant of event.participants) {
-    for (const vote of participant.votes) {
-      const counts = countsByOption.get(vote.optionId);
-      if (counts && (VOTE_VALUES as readonly string[]).includes(vote.value)) {
-        counts[vote.value as VoteValue] += 1;
-      }
+    if ((AVAILABILITY_VALUES as readonly string[]).includes(participant.availability)) {
+      counts[participant.availability as Availability] += 1;
     }
   }
+  return counts;
+}
+
+const venuePayload = (venueId: string | null) => {
+  if (!venueId || !isVenueId(venueId)) return null;
+  const venue = VENUES[venueId];
+  return { id: venue.id, label: venue.label, note: venue.note };
+};
+
+/**
+ * Vue publique d'un sondage, c'est tout ce dont la page de réponse a besoin.
+ * Le token organisateur n'y figure jamais, seul le lien de gestion le révèle.
+ */
+export function serializeEvent(event: EventWithParticipants) {
+  const counts = countAnswers(event);
+  const recommendation = recommendVenue(counts);
 
   return {
     id: event.id,
@@ -47,38 +51,42 @@ export function serializeEvent(event: EventWithRelations) {
     voteDeadline: event.voteDeadline.toISOString(),
     status: event.status,
     votingOpen: isVotingOpen(event),
-    winningOptionId: event.winningOptionId,
-    publicToken: event.publicToken,
     createdAt: event.createdAt.toISOString(),
-    options: event.options.map((option) => ({
-      id: option.id,
-      label: option.label,
-      capacity: option.capacity,
-      position: option.position,
-      counts: countsByOption.get(option.id) ?? emptyCounts(),
-    })),
+    publicToken: event.publicToken,
+    counts,
+    recommendation: {
+      venue: venuePayload(recommendation.venueId),
+      reason: recommendation.reason,
+    },
+    chosenVenue: venuePayload(event.chosenVenue),
     participants: event.participants.map((participant) => ({
       id: participant.id,
       name: participant.name,
+      availability: participant.availability,
       createdAt: participant.createdAt.toISOString(),
-      // votes indexés par optionId : le frontend lit directement une case du tableau.
-      votes: Object.fromEntries(participant.votes.map((vote) => [vote.optionId, vote.value])),
     })),
   };
 }
 
-/** Vue organisateur : la vue publique plus les éléments de gestion. */
-export function serializeEventForOrganizer(event: EventWithRelations) {
+/** Vue organisateur : la vue publique plus de quoi gérer le sondage. */
+export function serializeEventForOrganizer(event: EventWithParticipants) {
   return {
     ...serializeEvent(event),
     organizerToken: event.organizerToken,
     recurrenceTemplateId: event.recurrenceTemplateId,
+    /** Les lieux proposés à la clôture, y compris celui réservé à l'organisateur. */
+    venues: Object.values(VENUES).map((venue) => ({
+      id: venue.id,
+      label: venue.label,
+      note: venue.note,
+      organizerOnly: venue.organizerOnly,
+    })),
   };
 }
 
-/** Ligne d'historique : volontairement légère, la liste peut être longue. */
-export function serializeEventSummary(event: EventWithRelations) {
-  const winningOption = event.options.find((option) => option.id === event.winningOptionId);
+/** Ligne de liste ou d'historique, volontairement légère. */
+export function serializeEventSummary(event: EventWithParticipants) {
+  const counts = countAnswers(event);
 
   return {
     id: event.id,
@@ -88,31 +96,25 @@ export function serializeEventSummary(event: EventWithRelations) {
     status: event.status,
     votingOpen: isVotingOpen(event),
     publicToken: event.publicToken,
+    counts,
     participantCount: event.participants.length,
-    winningOption: winningOption ? { id: winningOption.id, label: winningOption.label } : null,
+    chosenVenue: venuePayload(event.chosenVenue),
   };
 }
 
-export function serializeTemplate(template: TemplateWithOptions) {
+export function serializeTemplate(template: Prisma.RecurrenceTemplateGetPayload<object>) {
   return {
     id: template.id,
     title: template.title,
     description: template.description,
     weekday: template.weekday,
-    matchTime: template.matchTime,
     deadlineHoursBefore: template.deadlineHoursBefore,
     leadTimeDays: template.leadTimeDays,
     active: template.active,
     createdAt: template.createdAt.toISOString(),
-    options: template.options.map((option) => ({
-      id: option.id,
-      label: option.label,
-      capacity: option.capacity,
-      position: option.position,
-    })),
   };
 }
 
-export function serializeTemplateForOrganizer(template: TemplateWithOptions) {
+export function serializeTemplateForOrganizer(template: Prisma.RecurrenceTemplateGetPayload<object>) {
   return { ...serializeTemplate(template), organizerToken: template.organizerToken };
 }

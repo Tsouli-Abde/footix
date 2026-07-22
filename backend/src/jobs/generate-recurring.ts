@@ -13,7 +13,7 @@ for (const created of result.created) {
   console.log(`Créé : événement ${created.eventId} le ${created.matchDate} (token ${created.publicToken})`);
 }
 for (const skipped of result.skipped) {
-  console.log(`Ignoré : modèle ${skipped.templateId} — ${skipped.reason}`);
+  console.log(`Ignoré : modèle ${skipped.templateId}, ${skipped.reason}`);
 }
 console.log(`${result.created.length} événement(s) créé(s), ${result.skipped.length} ignoré(s).`);
 

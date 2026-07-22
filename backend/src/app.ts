@@ -1,10 +1,10 @@
 import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './http.js';
+import { answersRouter } from './routes/answers.js';
 import { eventsRouter } from './routes/events.js';
 import { manageRouter } from './routes/manage.js';
 import { templatesRouter } from './routes/templates.js';
-import { votesRouter } from './routes/votes.js';
 
 export function createApp() {
   const app = express();
@@ -16,7 +16,7 @@ export function createApp() {
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
-  app.use('/api', eventsRouter, votesRouter, manageRouter, templatesRouter);
+  app.use('/api', eventsRouter, answersRouter, manageRouter, templatesRouter);
 
   app.use((_req, res) => res.status(404).json({ error: 'Route inconnue' }));
   app.use(errorHandler);

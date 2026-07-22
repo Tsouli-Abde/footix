@@ -1,7 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <circle cx="32" cy="32" r="30" fill="#16a34a" />
-  <path
-    fill="#ffffff"
-    d="M32 14l9 6.5-3.4 10.6h-11.2L23 20.5 32 14zm-16.6 12.6l8.2 6-3.4 10.6-9.6.1a20.4 20.4 0 0 1 4.8-16.7zm33.2 0a20.4 20.4 0 0 1 4.8 16.7l-9.6-.1-3.4-10.6 8.2-6zM26.4 44.6h11.2l3.3 9.1a20.3 20.3 0 0 1-17.8 0l3.3-9.1z"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Footix">
+  <defs>
+    <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22c55e" />
+      <stop offset="1" stop-color="#15803d" />
+    </linearGradient>
+    <clipPath id="ball">
+      <circle cx="32" cy="32" r="19" />
+    </clipPath>
+  </defs>
+
+  <rect width="64" height="64" rx="15" fill="url(#pitch)" />
+
+  <circle cx="32" cy="32" r="19" fill="#ffffff" />
+
+  <g clip-path="url(#ball)">
+    <!-- Coutures partant des pointes du pentagone central. -->
+    <g stroke="#0f172a" stroke-width="2" stroke-linecap="round" fill="none">
+      <path d="M32 25 32 12" />
+      <path d="M38.66 29.84 51.02 25.82" />
+      <path d="M36.12 37.66 43.76 48.18" />
+      <path d="M27.88 37.66 20.24 48.18" />
+      <path d="M25.34 29.84 12.98 25.82" />
+    </g>
+
+    <!-- Pentagone central, puis les cinq pièces du pourtour, décalées de 36°. -->
+    <path d="M32 25 38.66 29.84 36.12 37.66 27.88 37.66 25.34 29.84Z" fill="#0f172a" />
+    <g fill="#0f172a">
+      <path d="M32 56 27.72 52.89 29.35 47.86 34.65 47.86 36.28 52.89Z" />
+      <path d="M32 56 27.72 52.89 29.35 47.86 34.65 47.86 36.28 52.89Z" transform="rotate(72 32 32)" />
+      <path d="M32 56 27.72 52.89 29.35 47.86 34.65 47.86 36.28 52.89Z" transform="rotate(144 32 32)" />
+      <path d="M32 56 27.72 52.89 29.35 47.86 34.65 47.86 36.28 52.89Z" transform="rotate(216 32 32)" />
+      <path d="M32 56 27.72 52.89 29.35 47.86 34.65 47.86 36.28 52.89Z" transform="rotate(288 32 32)" />
+    </g>
+  </g>
+
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#0f172a" stroke-width="2.4" />
 </svg>
