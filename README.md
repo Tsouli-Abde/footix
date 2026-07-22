@@ -47,8 +47,15 @@ Autres partis pris, hérités de l'usage réel :
 - **Le prénom identifie la personne.** Ressaisir le même prénom (accents et casse
   indifférents) recharge sa réponse au lieu d'en créer une deuxième.
 
+Une fois le match joué, l'organisateur peut noter le **score**, visible ensuite par tout le
+monde et dans l'historique.
+
 Les matchs hebdomadaires s'appuient sur un **rendez-vous récurrent** : un job quotidien crée
-le sondage de la semaine quelques jours avant.
+le sondage de la semaine quelques jours avant. Ce rendez-vous a un **lien permanent**
+(`/hebdo/<id>`) qu'on épingle une fois pour toutes sur Teams : il renvoie toujours vers le
+sondage de la semaine en cours, sans avoir à repartager une URL chaque semaine. La page de
+gestion du rendez-vous (`/recurrence/<token>`) liste tous les sondages produits avec leur
+lien de gestion, pour pouvoir les clôturer et noter les scores.
 
 ## Développement local
 
@@ -127,18 +134,21 @@ Organisateur (`:organizerToken`) :
 | --- | --- | --- |
 | `GET` `PATCH` `DELETE` | `/api/manage/:organizerToken` | consulter, modifier, supprimer |
 | `POST` | `/api/manage/:organizerToken/close` | clôturer et fixer le lieu |
-| `POST` | `/api/manage/:organizerToken/reopen` | rouvrir |
+| `PATCH` | `/api/manage/:organizerToken/result` | noter le score après le match |
+| `POST` | `/api/manage/:organizerToken/reopen` | rouvrir (efface lieu et score) |
 
 Récurrence :
 
 | Méthode | Route | Rôle |
 | --- | --- | --- |
 | `GET` `POST` | `/api/templates` | lister, créer un rendez-vous hebdo |
+| `GET` | `/api/templates/:templateId/current` | le sondage courant (cible du lien permanent) |
 | `GET` `PATCH` | `/api/templates/manage/:organizerToken` | consulter, modifier |
+| `GET` | `/api/templates/manage/:organizerToken/events` | les sondages produits, avec leur lien de gestion |
 | `POST` | `/api/templates/generate` | forcer la génération (ce que fait le cron) |
 
 ## Pistes pour la suite
 
 - Export ICS / Google / Outlook.
 - Rappel automatique sur Teams avant la deadline.
-- Statistiques d'assiduité et lieux les plus retenus.
+- Statistiques d'assiduité, lieux les plus retenus, buteurs.

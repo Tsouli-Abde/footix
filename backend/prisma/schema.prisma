@@ -17,8 +17,11 @@ datasource db {
 /// Il n'y a plus d'options à voter : chacun dit juste s'il est dispo, et le lieu
 /// se déduit du nombre de présents (cf. recommendVenue dans src/domain.ts).
 model Event {
-  id          String  @id @default(cuid())
-  title       String
+  id String @id @default(cuid())
+
+  /// Facultatif : sans titre, c'est la date qui sert d'intitulé. Évite de
+  /// répéter "Foot vendredi ?" sur toutes les lignes de l'historique.
+  title       String?
   description String?
 
   /// "ponctuel" | "recurrent"
@@ -41,6 +44,12 @@ model Event {
   /// Lieu retenu à la clôture ("five" | "sceaux" | "externe").
   /// L'app recommande, l'organisateur tranche.
   chosenVenue String?
+
+  /// Score final, saisi librement après le match ("5-3", "on n'a pas compté").
+  score String?
+
+  /// Deux mots sur le match, à côté du score.
+  resultNote String?
 
   /// Token du lien partagé sur Teams (voir et répondre).
   publicToken String @unique

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api';
-import { Alert, Button, Card, Field, inputClass, PageState } from '../components/ui';
-import { formatMatchDate, WEEKDAYS } from '../lib/dates';
-import type { RecurrenceTemplate } from '../types';
+import { CopyLink } from '../components/CopyLink';
+import { Alert, Badge, Button, Card, Field, inputClass, PageState } from '../components/ui';
+import { formatMatchDate, formatShortDate, WEEKDAYS } from '../lib/dates';
+import type { EventSummary, RecurrenceTemplate } from '../types';
 
 /**
  * Le rendez-vous hebdomadaire. Un job quotidien crée le sondage de la semaine
@@ -13,6 +14,7 @@ export function RecurrencePage() {
   const { organizerToken = '' } = useParams();
 
   const [template, setTemplate] = useState<RecurrenceTemplate | null>(null);
+  const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -26,10 +28,10 @@ export function RecurrencePage() {
   });
 
   useEffect(() => {
-    api
-      .getTemplate(organizerToken)
-      .then((loaded) => {
+    Promise.all([api.getTemplate(organizerToken), api.getTemplateEvents(organizerToken)])
+      .then(([loaded, generated]) => {
         setTemplate(loaded);
+        setEvents(generated);
         setForm({
           title: loaded.title,
           description: loaded.description ?? '',
@@ -75,6 +77,49 @@ export function RecurrencePage() {
 
       {error && <Alert>{error}</Alert>}
       {saved && <Alert tone="info">C’est enregistré.</Alert>}
+
+      <Card className="space-y-2">
+        <CopyLink
+          path={`/hebdo/${template.id}`}
+          label="Lien permanent à épingler"
+          hint="Colle-le une fois sur Teams : il renvoie toujours vers le sondage de la semaine."
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-semibold">Les sondages de ce rendez-vous</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Chacun a son propre lien de gestion, pour le clôturer et noter le score.
+        </p>
+
+        {events.length === 0 ? (
+          <p className="text-sm text-slate-500">Aucun sondage pour l’instant, le prochain arrive tout seul.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {events.map((event) => (
+              <li key={event.id} className="flex flex-wrap items-center gap-3 py-3">
+                <span className="text-sm font-medium text-slate-700">{formatShortDate(event.matchDate)}</span>
+                <Badge className={event.votingOpen ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}>
+                  {event.votingOpen ? 'Ouvert' : event.status === 'cloture' ? 'Clôturé' : 'Fermé'}
+                </Badge>
+                <span className="text-xs text-slate-400">
+                  {event.counts.oui} présents
+                  {event.chosenVenue && ` · ${event.chosenVenue.label}`}
+                  {event.score && ` · ${event.score}`}
+                </span>
+                {event.organizerToken && (
+                  <Link
+                    to={`/manage/${event.organizerToken}`}
+                    className="ml-auto text-sm font-medium text-green-700 hover:underline"
+                  >
+                    Gérer
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <Card className="space-y-5">
         <Field label="Titre des sondages">

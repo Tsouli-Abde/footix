@@ -7,14 +7,16 @@ import { prisma } from '../db.js';
 import { generateToken } from '../domain.js';
 import { generateDueEvents } from '../recurrence.js';
 
-const existing = await prisma.recurrenceTemplate.findFirst({ where: { title: 'Foot vendredi ?' } });
+const TITLE = 'Foot hebdo du vendredi';
+
+const existing = await prisma.recurrenceTemplate.findFirst({ where: { title: TITLE } });
 
 if (existing) {
   console.log('Le rendez-vous du vendredi existe déjà, rien à faire.');
 } else {
   const template = await prisma.recurrenceTemplate.create({
     data: {
-      title: 'Foot vendredi ?',
+      title: TITLE,
       description: 'Le match de la semaine, sur la pause déj.',
       weekday: 5,
       deadlineHoursBefore: 18, // jeudi 18h pour un match vendredi midi

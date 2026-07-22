@@ -59,6 +59,8 @@ export function serializeEvent(event: EventWithParticipants) {
       reason: recommendation.reason,
     },
     chosenVenue: venuePayload(event.chosenVenue),
+    score: event.score,
+    resultNote: event.resultNote,
     participants: event.participants.map((participant) => ({
       id: participant.id,
       name: participant.name,
@@ -99,6 +101,7 @@ export function serializeEventSummary(event: EventWithParticipants) {
     counts,
     participantCount: event.participants.length,
     chosenVenue: venuePayload(event.chosenVenue),
+    score: event.score,
   };
 }
 

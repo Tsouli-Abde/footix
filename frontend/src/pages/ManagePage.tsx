@@ -4,10 +4,11 @@ import { api, ApiError } from '../api';
 import { AnswerList } from '../components/AnswerList';
 import { CopyLink } from '../components/CopyLink';
 import { EventHeader } from '../components/EventHeader';
+import { ResultCard } from '../components/ResultCard';
 import { VenueCard } from '../components/VenueCard';
 import { Alert, Button, Card, Field, inputClass, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
-import { toDateInput, toDateTimeLocal } from '../lib/dates';
+import { formatMatchDate, toDateInput, toDateTimeLocal } from '../lib/dates';
 import type { FootixEvent } from '../types';
 
 /**
@@ -48,6 +49,7 @@ export function ManagePage() {
   return (
     <div className="space-y-6">
       <EventHeader event={event} />
+      <ResultCard event={event} />
       <VenueCard event={event} />
 
       {actionError && <Alert>{actionError}</Alert>}
@@ -69,12 +71,15 @@ export function ManagePage() {
       {event.status === 'ouvert' ? (
         <CloseCard event={event} onClose={(venueId) => void run(() => api.closeEvent(organizerToken, venueId))} />
       ) : (
-        <Card className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-600">Le sondage est clôturé. Tu peux le rouvrir si tu as été trop vite.</p>
-          <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
-            Rouvrir
-          </Button>
-        </Card>
+        <>
+          <ResultForm event={event} onSave={(result) => void run(() => api.saveResult(organizerToken, result))} />
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">Le sondage est clôturé. Tu peux le rouvrir si tu as été trop vite.</p>
+            <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
+              Rouvrir
+            </Button>
+          </Card>
+        </>
       )}
 
       {editing ? (
@@ -97,6 +102,48 @@ export function ManagePage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Saisie du score après le match. Modifiable autant qu'on veut. */
+function ResultForm({
+  event,
+  onSave,
+}: {
+  event: FootixEvent;
+  onSave: (result: { score: string | null; resultNote: string | null }) => void;
+}) {
+  const [score, setScore] = useState(event.score ?? '');
+  const [note, setNote] = useState(event.resultNote ?? '');
+
+  const dirty = score !== (event.score ?? '') || note !== (event.resultNote ?? '');
+
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold">Le résultat</h2>
+        <p className="mt-1 text-sm text-slate-500">Une fois le match joué, note le score. Tout le monde le verra.</p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[8rem_1fr]">
+        <Field label="Score">
+          <input value={score} onChange={(e) => setScore(e.target.value)} placeholder="5-3" maxLength={40} className={inputClass} />
+        </Field>
+        <Field label="Un mot (facultatif)">
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Beau but de Karim en fin de match."
+            maxLength={280}
+            className={inputClass}
+          />
+        </Field>
+      </div>
+
+      <Button onClick={() => onSave({ score: score.trim() || null, resultNote: note.trim() || null })} disabled={!dirty}>
+        {event.score || event.resultNote ? 'Mettre à jour le résultat' : 'Enregistrer le résultat'}
+      </Button>
+    </Card>
   );
 }
 
@@ -140,10 +187,10 @@ function EditCard({
   onCancel,
 }: {
   event: FootixEvent;
-  onSave: (input: { title: string; description: string | null; matchDate: string; voteDeadline: string }) => void;
+  onSave: (input: { title: string | null; description: string | null; matchDate: string; voteDeadline: string }) => void;
   onCancel: () => void;
 }) {
-  const [title, setTitle] = useState(event.title);
+  const [title, setTitle] = useState(event.title ?? '');
   const [description, setDescription] = useState(event.description ?? '');
   const [matchDate, setMatchDate] = useState(toDateInput(new Date(event.matchDate)));
   const [voteDeadline, setVoteDeadline] = useState(toDateTimeLocal(new Date(event.voteDeadline)));
@@ -152,8 +199,14 @@ function EditCard({
     <Card className="space-y-5">
       <h2 className="text-lg font-semibold">Modifier</h2>
 
-      <Field label="Titre">
-        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className={inputClass} />
+      <Field label="Titre" hint="Vide = la date sert d’intitulé.">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={formatMatchDate(event.matchDate)}
+          maxLength={120}
+          className={inputClass}
+        />
       </Field>
 
       <Field label="Précision">
@@ -185,7 +238,7 @@ function EditCard({
           onClick={() => {
             const [year, month, day] = matchDate.split('-').map(Number);
             onSave({
-              title: title.trim(),
+              title: title.trim() || null,
               description: description.trim() || null,
               matchDate: new Date(year, month - 1, day, 12, 0, 0, 0).toISOString(),
               voteDeadline: new Date(voteDeadline).toISOString(),

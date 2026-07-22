@@ -22,7 +22,8 @@ export type Participant = {
 
 export type FootixEvent = {
   id: string;
-  title: string;
+  /** null quand personne n'a mis de titre : c'est la date qui sert d'intitulé. */
+  title: string | null;
   description: string | null;
   type: 'ponctuel' | 'recurrent';
   matchDate: string;
@@ -34,6 +35,8 @@ export type FootixEvent = {
   counts: Counts;
   recommendation: { venue: Venue | null; reason: string };
   chosenVenue: Venue | null;
+  score: string | null;
+  resultNote: string | null;
   participants: Participant[];
   /** Présents uniquement sur la vue organisateur. */
   organizerToken?: string;
@@ -43,7 +46,7 @@ export type FootixEvent = {
 
 export type EventSummary = {
   id: string;
-  title: string;
+  title: string | null;
   matchDate: string;
   voteDeadline: string;
   status: 'ouvert' | 'cloture';
@@ -52,6 +55,9 @@ export type EventSummary = {
   counts: Counts;
   participantCount: number;
   chosenVenue: Venue | null;
+  score: string | null;
+  /** Présent seulement quand la liste vient de la gestion d'un rendez-vous hebdo. */
+  organizerToken?: string;
 };
 
 export type RecurrenceTemplate = {

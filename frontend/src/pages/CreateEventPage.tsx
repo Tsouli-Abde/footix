@@ -130,10 +130,11 @@ export function CreateEventPage() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Foot vendredi ?"
+              placeholder={formatMatchDate(matchDate.toISOString())}
               maxLength={120}
               className={inputClass}
             />
+            <p className="mt-1 text-xs text-slate-500">Laisse vide et c’est la date qui sert de titre.</p>
           </OptionalField>
         )}
 

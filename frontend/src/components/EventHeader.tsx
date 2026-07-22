@@ -1,12 +1,15 @@
-import { formatCountdown, formatDeadlineDate, formatMatchDate } from '../lib/dates';
+import { eventTitle, formatCountdown, formatDeadlineDate, formatMatchDate } from '../lib/dates';
 import type { FootixEvent } from '../types';
 import { Badge } from './ui';
 
 export function EventHeader({ event }: { event: FootixEvent }) {
+  // Sans titre saisi, la date fait déjà le gros titre : inutile de la répéter en dessous.
+  const hasTitle = Boolean(event.title);
+
   return (
     <header>
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">{event.title}</h1>
+        <h1 className="text-2xl font-bold">{eventTitle(event)}</h1>
         {event.status === 'cloture' ? (
           <Badge className="bg-slate-200 text-slate-700">Clôturé</Badge>
         ) : event.votingOpen ? (
@@ -16,7 +19,7 @@ export function EventHeader({ event }: { event: FootixEvent }) {
         )}
       </div>
 
-      <p className="mt-1 text-lg text-slate-700">{formatMatchDate(event.matchDate)}</p>
+      {hasTitle && <p className="mt-1 text-lg text-slate-700">{formatMatchDate(event.matchDate)}</p>}
       {event.description && <p className="mt-2 text-sm text-slate-600">{event.description}</p>}
 
       <p className="mt-2 text-sm text-slate-500">

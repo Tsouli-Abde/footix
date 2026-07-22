@@ -33,7 +33,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type CreateEventInput = {
   matchDate: string;
-  title?: string;
+  title?: string | null;
   description?: string | null;
   voteDeadline?: string;
 };
@@ -73,6 +73,12 @@ export const api = {
       body: JSON.stringify({ chosenVenue }),
     }).then((r) => r.event),
 
+  saveResult: (organizerToken: string, result: { score: string | null; resultNote: string | null }) =>
+    request<{ event: FootixEvent }>(`/manage/${organizerToken}/result`, {
+      method: 'PATCH',
+      body: JSON.stringify(result),
+    }).then((r) => r.event),
+
   reopenEvent: (organizerToken: string) =>
     request<{ event: FootixEvent }>(`/manage/${organizerToken}/reopen`, { method: 'POST' }).then((r) => r.event),
 
@@ -82,6 +88,14 @@ export const api = {
 
   getTemplate: (organizerToken: string) =>
     request<{ template: RecurrenceTemplate }>(`/templates/manage/${organizerToken}`).then((r) => r.template),
+
+  /** Le sondage du moment pour un rendez-vous, ce vers quoi pointe le lien permanent. */
+  getCurrentTemplateEvent: (templateId: string) =>
+    request<{ event: FootixEvent | null }>(`/templates/${templateId}/current`).then((r) => r.event),
+
+  /** Sondages produits par un rendez-vous hebdo, avec leur lien de gestion. */
+  getTemplateEvents: (organizerToken: string) =>
+    request<{ events: EventSummary[] }>(`/templates/manage/${organizerToken}/events`).then((r) => r.events),
 
   updateTemplate: (organizerToken: string, input: Record<string, unknown>) =>
     request<{ template: RecurrenceTemplate }>(`/templates/manage/${organizerToken}`, {

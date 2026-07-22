@@ -14,6 +14,10 @@ const capitalizeFirst = (text: string) => text.charAt(0).toUpperCase() + text.sl
 /** Le match est toujours sur la pause déj, donc on n'affiche jamais l'heure. */
 export const formatMatchDate = (iso: string) => capitalizeFirst(matchDay.format(new Date(iso)));
 
+/** Titre à afficher : celui saisi, ou la date à défaut, pour ne jamais avoir de vide. */
+export const eventTitle = (event: { title: string | null; matchDate: string }) =>
+  event.title ?? formatMatchDate(event.matchDate);
+
 /** La deadline, elle, a besoin de son heure. */
 export const formatDeadlineDate = (iso: string) => capitalizeFirst(dayAndTime.format(new Date(iso)));
 

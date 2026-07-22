@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { Badge, Button, Card, PageState } from '../components/ui';
-import { formatCountdown, formatMatchDate, WEEKDAYS } from '../lib/dates';
+import { eventTitle, formatCountdown, formatMatchDate, WEEKDAYS } from '../lib/dates';
 import type { EventSummary, RecurrenceTemplate } from '../types';
 
 export function HomePage() {
@@ -49,12 +49,12 @@ export function HomePage() {
               <Link to={`/e/${event.publicToken}`} className="block h-full">
                 <Card className="h-full transition-shadow hover:shadow-md">
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold text-slate-900">{event.title}</h2>
+                    <h2 className="font-semibold text-slate-900">{eventTitle(event)}</h2>
                     <Badge className={event.votingOpen ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
                       {event.votingOpen ? 'Ouvert' : 'Deadline passée'}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">{formatMatchDate(event.matchDate)}</p>
+                  {event.title && <p className="mt-1 text-sm text-slate-600">{formatMatchDate(event.matchDate)}</p>}
                   <p className="mt-3 text-xs text-slate-500">
                     {event.counts.oui} présent{event.counts.oui > 1 ? 's' : ''}
                     {event.counts.si_besoin > 0 && `, ${event.counts.si_besoin} si besoin`} · réponses{' '}

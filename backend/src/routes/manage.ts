@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db.js';
 import { atMatchHour, occurrenceKeyFor } from '../domain.js';
 import { badRequest, conflict, notFound, route } from '../http.js';
-import { closeEventSchema, updateEventSchema } from '../schemas.js';
+import { closeEventSchema, resultSchema, updateEventSchema } from '../schemas.js';
 import { eventInclude, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
 export const manageRouter = Router();
@@ -80,15 +80,40 @@ manageRouter.post(
   }),
 );
 
+/**
+ * Le score, une fois le match joué. C'est le seul écrit qui arrive après coup,
+ * et il reste visible par tout le monde sur le lien public.
+ */
+manageRouter.patch(
+  '/manage/:organizerToken/result',
+  route(async (req, res) => {
+    const event = await loadByOrganizerToken(req.params.organizerToken);
+    const input = resultSchema.parse(req.body);
+
+    const updated = await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        score: input.score === undefined ? undefined : input.score || null,
+        resultNote: input.resultNote === undefined ? undefined : input.resultNote || null,
+      },
+      include: eventInclude,
+    });
+
+    res.json({ event: serializeEventForOrganizer(updated) });
+  }),
+);
+
 /** Réouverture, si on a clôturé trop vite. */
 manageRouter.post(
   '/manage/:organizerToken/reopen',
   route(async (req, res) => {
     const event = await loadByOrganizerToken(req.params.organizerToken);
 
+    // Rouvrir remet à zéro le lieu et le score : le match est considéré comme
+    // pas encore joué, autant ne pas laisser traîner un résultat périmé.
     const updated = await prisma.event.update({
       where: { id: event.id },
-      data: { status: 'ouvert', chosenVenue: null },
+      data: { status: 'ouvert', chosenVenue: null, score: null, resultNote: null },
       include: eventInclude,
     });
 

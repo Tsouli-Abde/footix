@@ -7,8 +7,6 @@ import { eventInclude, serializeEvent, serializeEventForOrganizer, serializeEven
 
 export const eventsRouter = Router();
 
-const DEFAULT_TITLE = 'Foot vendredi ?';
-
 /**
  * Liste des sondages, du plus récent au plus ancien.
  * `?status=ouvert` pour ceux en cours, `?status=cloture` pour l'historique.
@@ -31,9 +29,9 @@ eventsRouter.get(
 /**
  * Création d'un sondage.
  *
- * Tout est optionnel sauf la date : sans titre on met "Foot vendredi ?", sans
- * deadline on ferme la veille à 18h. L'idée est de pouvoir lancer un sondage
- * sans rien remplir.
+ * Tout est optionnel sauf la date. Sans titre, c'est la date qui sert
+ * d'intitulé, ça évite de répéter le même libellé à chaque semaine. Sans
+ * deadline, les réponses ferment la veille à 18h.
  *
  * Un seul sondage par jour. S'il en existe déjà un, on répond 409 avec celui-ci
  * pour que le frontend y renvoie au lieu d'en créer un deuxième.
@@ -53,7 +51,7 @@ eventsRouter.post(
 
     const event = await prisma.event.create({
       data: {
-        title: input.title?.trim() || DEFAULT_TITLE,
+        title: input.title?.trim() || null,
         description: input.description ?? null,
         type: 'ponctuel',
         matchDate,

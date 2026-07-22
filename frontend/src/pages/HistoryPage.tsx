@@ -36,18 +36,17 @@ export function HistoryPage() {
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3 font-semibold">Date</th>
-                <th className="px-5 py-3 font-semibold">Match</th>
                 <th className="px-5 py-3 font-semibold">Lieu</th>
+                <th className="px-5 py-3 font-semibold">Score</th>
                 <th className="px-5 py-3 text-right font-semibold">Présents</th>
               </tr>
             </thead>
             <tbody>
               {events.map((event) => (
                 <tr key={event.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="whitespace-nowrap px-5 py-3 text-slate-500">{formatShortDate(event.matchDate)}</td>
-                  <td className="px-5 py-3">
-                    <Link to={`/e/${event.publicToken}`} className="font-medium text-slate-800 hover:underline">
-                      {event.title}
+                  <td className="whitespace-nowrap px-5 py-3">
+                    <Link to={`/e/${event.publicToken}`} className="font-medium text-slate-700 hover:underline">
+                      {formatShortDate(event.matchDate)}
                     </Link>
                   </td>
                   <td className="px-5 py-3">
@@ -58,6 +57,9 @@ export function HistoryPage() {
                     ) : (
                       <span className="text-slate-400">Annulé</span>
                     )}
+                  </td>
+                  <td className="px-5 py-3 tabular-nums text-slate-700">
+                    {event.score ?? <span className="text-slate-300">·</span>}
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums text-slate-600">{event.counts.oui}</td>
                 </tr>

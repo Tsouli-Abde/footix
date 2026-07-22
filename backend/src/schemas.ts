@@ -10,7 +10,7 @@ const venueId = z.enum(Object.keys(VENUES) as [string, ...string[]]);
  */
 export const createEventSchema = z
   .object({
-    title: z.string().trim().min(1).max(120).optional(),
+    title: z.string().trim().max(120).nullable().optional(),
     description: z.string().trim().max(500).nullable().optional(),
     matchDate: z.coerce.date(),
     voteDeadline: z.coerce.date().optional(),
@@ -21,7 +21,7 @@ export const createEventSchema = z
   });
 
 export const updateEventSchema = z.object({
-  title: z.string().trim().min(1).max(120).optional(),
+  title: z.string().trim().max(120).nullable().optional(),
   description: z.string().trim().max(500).nullable().optional(),
   matchDate: z.coerce.date().optional(),
   voteDeadline: z.coerce.date().optional(),
@@ -30,6 +30,12 @@ export const updateEventSchema = z.object({
 export const closeEventSchema = z.object({
   /** null = clôturer sans lieu retenu, par exemple si le match tombe à l'eau. */
   chosenVenue: venueId.nullable().optional(),
+});
+
+/** Ce qu'on remplit une fois le match joué. */
+export const resultSchema = z.object({
+  score: z.string().trim().max(40).nullable().optional(),
+  resultNote: z.string().trim().max(280).nullable().optional(),
 });
 
 export const answerSchema = z.object({

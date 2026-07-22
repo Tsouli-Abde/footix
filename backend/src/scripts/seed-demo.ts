@@ -27,10 +27,10 @@ const TEAM = [
 
 /** Matchs déjà joués, du plus récent au plus ancien. */
 const PAST_MATCHES = [
-  { date: new Date(2026, 6, 17), present: 13, maybe: 1, venue: 'sceaux' },
-  { date: new Date(2026, 6, 10), present: 8, maybe: 2, venue: 'five' },
-  { date: new Date(2026, 6, 3), present: 12, maybe: 2, venue: 'sceaux' },
-  { date: new Date(2026, 5, 26), present: 7, maybe: 1, venue: 'five' },
+  { date: new Date(2026, 6, 17), present: 13, maybe: 1, venue: 'sceaux', score: '6-4', note: 'Fin de match à l’arrache.' },
+  { date: new Date(2026, 6, 10), present: 8, maybe: 2, venue: 'five', score: '3-3', note: null },
+  { date: new Date(2026, 6, 3), present: 12, maybe: 2, venue: 'sceaux', score: '5-2', note: 'Karim en feu.' },
+  { date: new Date(2026, 5, 26), present: 7, maybe: 1, venue: 'five', score: null, note: 'On a arrêté de compter.' },
 ];
 
 /** Les `present` premiers répondent oui, les `maybe` suivants si besoin, le reste non. */
@@ -40,7 +40,9 @@ function availabilityAt(index: number, present: number, maybe: number): Availabi
   return 'non';
 }
 
-async function createPastMatch(date: Date, present: number, maybe: number, venue: string) {
+type PastMatch = (typeof PAST_MATCHES)[number];
+
+async function createPastMatch({ date, present, maybe, venue, score, note }: PastMatch, templateId: string | null) {
   const matchDate = atMatchHour(date);
   const occurrenceKey = occurrenceKeyFor(matchDate);
 
@@ -51,13 +53,16 @@ async function createPastMatch(date: Date, present: number, maybe: number, venue
 
   await prisma.event.create({
     data: {
-      title: 'Foot vendredi ?',
+      title: null, // sans titre, c'est la date qui sert d'intitulé
       type: 'recurrent',
+      recurrenceTemplateId: templateId,
       matchDate,
       occurrenceKey,
       voteDeadline: defaultDeadlineFor(matchDate),
       status: 'cloture',
       chosenVenue: venue,
+      score,
+      resultNote: note,
       publicToken: generateToken(),
       organizerToken: generateToken(),
       participants: {
@@ -70,12 +75,14 @@ async function createPastMatch(date: Date, present: number, maybe: number, venue
     },
   });
 
-  console.log(`  ${occurrenceKey} : ${present} présents, on a joué au ${venue}.`);
+  console.log(`  ${occurrenceKey} : ${present} présents, ${venue}${score ? `, score ${score}` : ''}.`);
 }
+
+const template = await prisma.recurrenceTemplate.findFirst({ where: { active: true } });
 
 console.log('Matchs déjà joués :');
 for (const match of PAST_MATCHES) {
-  await createPastMatch(match.date, match.present, match.maybe, match.venue);
+  await createPastMatch(match, template?.id ?? null);
 }
 
 // Remplit le sondage en cours avec le reste de l'équipe.
@@ -108,7 +115,9 @@ if (openEvent) {
   console.log(`  Lien organisateur  : /manage/${openEvent.organizerToken}`);
 }
 
-const template = await prisma.recurrenceTemplate.findFirst({ where: { active: true } });
-if (template) console.log(`  Rendez-vous hebdo  : /recurrence/${template.organizerToken}`);
+if (template) {
+  console.log(`  Rendez-vous hebdo  : /recurrence/${template.organizerToken}`);
+  console.log(`  Lien permanent     : /hebdo/${template.id}`);
+}
 
 await prisma.$disconnect();
