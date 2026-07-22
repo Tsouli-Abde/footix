@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      PORT: 3001
+      DATABASE_URL: file:./data/footix.db
+      TZ: Europe/Paris
+    volumes:
+      # La base tient dans un fichier : un volume nommé suffit, et la sauvegarde
+      # se résume à copier ce fichier.
+      - footix-data:/app/prisma/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - '8080:80'
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Génération des événements hebdomadaires. Le job est idempotent : le
+  # relancer ne crée jamais de doublon, une passe par jour suffit largement.
+  cron:
+    build: ./backend
+    environment:
+      DATABASE_URL: file:./data/footix.db
+      TZ: Europe/Paris
+    volumes:
+      - footix-data:/app/prisma/data
+    command: sh -c 'while true; do node dist/jobs/generate-recurring.js; sleep 86400; done'
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  footix-data:
