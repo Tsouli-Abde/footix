@@ -1,0 +1,157 @@
+// Schéma Footix.
+//
+// SQLite ne supporte pas les enums Prisma : les champs "énumérés" sont des String
+// dont les valeurs autorisées sont validées côté API (voir src/domain.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Un événement = un match à organiser, sur lequel les collègues votent.
+model Event {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  /// "ponctuel" | "recurrent"
+  type String @default("ponctuel")
+
+  /// Date et heure du match.
+  matchDate DateTime
+
+  /// Jour du match au format YYYY-MM-DD.
+  /// Unique : c'est la garantie anti-doublon (un seul événement par date).
+  occurrenceKey String @unique
+
+  /// Fin des votes.
+  voteDeadline DateTime
+
+  /// "ouvert" | "cloture"
+  status String @default("ouvert")
+
+  /// Option retenue à la clôture. La décision reste humaine : l'organisateur
+  /// la choisit, rien n'est calculé automatiquement.
+  winningOptionId String?
+
+  /// Token du lien partagé sur Teams (lecture + vote).
+  publicToken String @unique
+
+  /// Token du lien de gestion (édition, clôture). À ne pas partager.
+  organizerToken String @unique
+
+  recurrenceTemplateId String?
+  recurrenceTemplate   RecurrenceTemplate? @relation(fields: [recurrenceTemplateId], references: [id], onDelete: SetNull)
+
+  options      Option[]
+  participants Participant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([matchDate])
+}
+
+/// Un lieu / format proposé au vote (Five, Parc, Stade, Match externe…).
+model Option {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  label String
+
+  /// Nombre de joueurs souhaité. Indicatif : affiché, jamais bloquant.
+  capacity Int?
+
+  /// Ordre d'affichage dans le tableau de vote.
+  position Int @default(0)
+
+  votes Vote[]
+
+  @@index([eventId])
+}
+
+/// Quelqu'un qui a voté. Pas de compte : juste un nom saisi librement.
+model Participant {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name String
+
+  /// Nom normalisé (minuscules, sans accents ni espaces superflus).
+  /// Sert à retrouver un votant qui revient modifier son vote.
+  nameKey String
+
+  votes Vote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, nameKey])
+}
+
+/// La réponse d'un participant sur une option donnée.
+model Vote {
+  id String @id @default(cuid())
+
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  optionId String
+  option   Option @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  /// "oui" | "si_besoin" | "non"
+  value String
+
+  @@unique([participantId, optionId])
+  @@index([optionId])
+}
+
+/// Modèle d'événement hebdomadaire : sert à générer automatiquement
+/// les instances (le job src/jobs/generate-recurring.ts).
+model RecurrenceTemplate {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+
+  /// Jour du match : 0 = dimanche … 5 = vendredi, 6 = samedi.
+  weekday Int
+
+  /// Heure du match, format "HH:MM".
+  matchTime String
+
+  /// Combien d'heures avant le match les votes se ferment (ex. 26h).
+  deadlineHoursBefore Int @default(26)
+
+  /// Combien de jours avant le match l'événement est créé (ex. 3 → mardi pour vendredi).
+  leadTimeDays Int @default(3)
+
+  active Boolean @default(true)
+
+  /// Token de gestion du modèle (mêmes règles que pour un événement).
+  organizerToken String @unique
+
+  options TemplateOption[]
+  events  Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Option par défaut recopiée sur chaque événement généré.
+model TemplateOption {
+  id         String             @id @default(cuid())
+  templateId String
+  template   RecurrenceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  label    String
+  capacity Int?
+  position Int @default(0)
+
+  @@index([templateId])
+}
