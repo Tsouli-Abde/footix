@@ -1,0 +1,28 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Base SQLite locale
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+backend/prisma/data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / éditeurs
+.DS_Store
+.idea/
+.vscode/
