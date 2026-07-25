@@ -6,4 +6,5 @@ export async function resetDb() {
   await prisma.event.deleteMany();
   await prisma.recurrenceTemplate.deleteMany();
   await prisma.pushSubscription.deleteMany();
+  await prisma.activity.deleteMany();
 }

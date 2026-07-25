@@ -1,7 +1,7 @@
 import type { RecurrenceTemplate } from '@prisma/client';
 import { prisma } from './db.js';
+import { announceVoteOpen } from './activity.js';
 import { generateToken, MATCH_HOUR, occurrenceKeyFor } from './domain.js';
-import { notifyEventOpen } from './push.js';
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -49,7 +49,7 @@ export async function generateDueEvents(now = new Date()): Promise<GenerationRes
     }
 
     const event = await createEventFromTemplate(template, matchDate, occurrenceKey);
-    await notifyEventOpen(event);
+    await announceVoteOpen(event);
     result.created.push({
       templateId: template.id,
       eventId: event.id,

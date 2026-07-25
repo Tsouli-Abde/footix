@@ -1,4 +1,4 @@
-import type { Availability, EventSummary, FootixEvent, RecurrenceTemplate } from './types';
+import type { Activity, Availability, EventSummary, FootixEvent, RecurrenceTemplate } from './types';
 
 /** En dev, Vite proxifie /api vers le backend. En prod, nginx fait la même chose. */
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
@@ -102,6 +102,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }).then((r) => r.template),
+
+  listActivity: (since?: string) =>
+    request<{ activities: Activity[] }>(`/activity${since ? `?since=${encodeURIComponent(since)}` : ''}`).then(
+      (r) => r.activities,
+    ),
 
   pushKey: () => request<{ enabled: boolean; key: string | null }>('/push/key'),
 

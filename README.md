@@ -78,6 +78,18 @@ une équipe et des matchs passés), avec les liens affichés en sortie :
 cd backend && npm run seed && npm run seed:demo
 ```
 
+## Notifications
+
+Deux canaux complémentaires, alimentés par le même **fil d'activité** (modèle `Activity`) :
+chaque moment notable (sondage ouvert, réponse, clôture avec lieu, score) y laisse une ligne.
+
+- **In-app** : une cloche dans l'en-tête (compteur de non-lus + panneau déroulant) et des
+  **toasts** qui surgissent quand quelque chose se passe pendant qu'on utilise l'app. Le front
+  interroge `/api/activity` par polling ; le toast n'apparaît que si l'onglet est visible, la
+  cloche se met à jour en continu. On ne se notifie jamais de sa propre réponse.
+- **Push OS** (ci-dessous) : pour l'écran verrouillé / l'app fermée, réservé aux moments forts
+  (sondage ouvert, clôture, score) pour ne pas faire sonner les téléphones à chaque réponse.
+
 ## Notifications push
 
 En plus du lien partagé sur Teams, on peut recevoir une **notification push** quand un

@@ -89,6 +89,28 @@ model Participant {
   @@unique([eventId, nameKey])
 }
 
+/// Le fil d'activité de l'équipe : ce qui alimente les notifications in-app.
+///
+/// Une ligne par événement notable (sondage ouvert, réponse, clôture, score).
+/// Le front interroge ce fil par polling, en affiche les nouveautés en toast et
+/// en tient un compteur de non-lus. Global à l'équipe, pas de compte.
+model Activity {
+  id String @id @default(cuid())
+
+  /// "vote_ouvert" | "reponse" | "cloture" | "score" | "annulation"
+  type String
+
+  title String
+  body  String
+
+  /// Lien vers le sondage concerné, pour ouvrir la bonne page au clic.
+  eventPublicToken String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 /// Un navigateur abonné aux notifications push (Web Push API).
 ///
 /// Pas de compte : on garde juste de quoi pousser un message vers ce navigateur.

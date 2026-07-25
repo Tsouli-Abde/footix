@@ -41,31 +41,31 @@ export async function removeSubscription(endpoint: string) {
   await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }
 
-type NotifiableEvent = { title: string | null; matchDate: Date; publicToken: string };
+export type PushPayload = { title: string; body: string; url: string };
 
 /**
- * Prévient tous les abonnés qu'un sondage est ouvert.
+ * Envoie une notification push à tous les abonnés.
  *
  * Fire-and-forget : on ne bloque jamais la réponse HTTP là-dessus, et un envoi
  * raté n'a pas d'importance. Les abonnements que le navigateur a expirés
  * (404/410) sont nettoyés au passage.
+ *
+ * Réservé aux moments forts (sondage ouvert, résultat) : pousser une notif à
+ * chaque réponse individuelle spammerait les téléphones. Le détail passe par le
+ * fil d'activité in-app.
  */
-export async function notifyEventOpen(event: NotifiableEvent) {
+export async function pushToAll(payload: PushPayload) {
   if (!pushEnabled()) return;
 
   const subscriptions = await prisma.pushSubscription.findMany();
   if (subscriptions.length === 0) return;
 
-  const payload = JSON.stringify({
-    title: event.title ?? 'Foot ?',
-    body: `On joue ${formatMatchDate(event.matchDate)} ? Dis si tu viens.`,
-    url: `/e/${event.publicToken}`,
-  });
+  const body = JSON.stringify(payload);
 
   await Promise.all(
     subscriptions.map(async (sub) => {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+        await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, body);
       } catch (err) {
         const status = (err as { statusCode?: number }).statusCode;
         if (status === 404 || status === 410) {
@@ -76,4 +76,15 @@ export async function notifyEventOpen(event: NotifiableEvent) {
       }
     }),
   );
+}
+
+type NotifiableEvent = { title: string | null; matchDate: Date; publicToken: string };
+
+/** Push « un sondage est ouvert ». */
+export function notifyEventOpen(event: NotifiableEvent) {
+  return pushToAll({
+    title: event.title ?? 'Foot ?',
+    body: `On joue ${formatMatchDate(event.matchDate)} ? Dis si tu viens.`,
+    url: `/e/${event.publicToken}`,
+  });
 }

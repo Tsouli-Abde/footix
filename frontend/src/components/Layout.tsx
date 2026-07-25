@@ -1,4 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { ToastHost } from '../notifications/ToastHost';
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -25,6 +27,7 @@ export function Layout() {
               Nouveau
             </NavLink>
           </nav>
+          <NotificationBell />
         </div>
       </header>
 
@@ -35,6 +38,8 @@ export function Layout() {
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-center text-xs text-slate-400">
         Pas de compte, juste un lien à partager.
       </footer>
+
+      <ToastHost />
     </div>
   );
 }

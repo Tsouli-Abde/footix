@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db.js';
 import { atMatchHour, occurrenceKeyFor } from '../domain.js';
 import { badRequest, conflict, notFound, route } from '../http.js';
+import { announceClose, announceScore } from '../activity.js';
 import { closeEventSchema, resultSchema, updateEventSchema } from '../schemas.js';
 import { eventInclude, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
@@ -78,6 +79,8 @@ manageRouter.post(
       include: eventInclude,
     });
 
+    void announceClose(updated, updated.chosenVenue);
+
     res.json({ event: serializeEventForOrganizer(updated) });
   }),
 );
@@ -92,14 +95,19 @@ manageRouter.patch(
     const event = await loadByOrganizerToken(req.params.organizerToken);
     const input = resultSchema.parse(req.body);
 
+    const score = input.score === undefined ? undefined : input.score || null;
+
     const updated = await prisma.event.update({
       where: { id: event.id },
       data: {
-        score: input.score === undefined ? undefined : input.score || null,
+        score,
         resultNote: input.resultNote === undefined ? undefined : input.resultNote || null,
       },
       include: eventInclude,
     });
+
+    // On n'annonce que l'arrivée d'un vrai score, pas son effacement.
+    if (score) void announceScore(updated, score);
 
     res.json({ event: serializeEventForOrganizer(updated) });
   }),

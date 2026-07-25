@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { announceAnswer } from '../activity.js';
 import { prisma } from '../db.js';
 import { isVotingOpen, normalizeName } from '../domain.js';
 import { badRequest, conflict, notFound, route } from '../http.js';
@@ -30,6 +31,8 @@ answersRouter.post(
       create: { eventId: event.id, name: input.name, nameKey, availability: input.availability },
       update: { name: input.name, availability: input.availability },
     });
+
+    void announceAnswer(event, input.name, input.availability);
 
     const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id }, include: eventInclude });
     res.status(201).json({ participantId: participant.id, event: serializeEvent(updated) });

@@ -60,6 +60,19 @@ export type EventSummary = {
   organizerToken?: string;
 };
 
+export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'cloture', 'score', 'annulation'] as const;
+export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+
+export type Activity = {
+  id: string;
+  type: ActivityType;
+  title: string;
+  body: string;
+  /** Lien vers le sondage concerné, ou null. */
+  url: string | null;
+  createdAt: string;
+};
+
 export type RecurrenceTemplate = {
   id: string;
   title: string;
