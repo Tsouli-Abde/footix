@@ -1,19 +1,34 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: footix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-footix}
+      POSTGRES_DB: footix
+      TZ: Europe/Paris
+    volumes:
+      - footix-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U footix']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   backend:
     build: ./backend
     environment:
       PORT: 3001
-      DATABASE_URL: file:./data/footix.db
+      DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD:-footix}@db:5432/footix?schema=public
       TZ: Europe/Paris
       # Notifications push : renseigner ces variables (via un .env à la racine ou
       # des secrets) active le push. Vides, les notifications sont désactivées.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
-    volumes:
-      # La base tient dans un fichier : un volume nommé suffit, et la sauvegarde
-      # se résume à copier ce fichier.
-      - footix-data:/app/prisma/data
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -30,17 +45,16 @@ services:
   cron:
     build: ./backend
     environment:
-      DATABASE_URL: file:./data/footix.db
+      DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD:-footix}@db:5432/footix?schema=public
       TZ: Europe/Paris
       # Le job envoie la notification "sondage ouvert", il lui faut donc les mêmes clés.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
-    volumes:
-      - footix-data:/app/prisma/data
     command: sh -c 'while true; do node dist/jobs/generate-recurring.js; sleep 86400; done'
     depends_on:
-      - backend
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

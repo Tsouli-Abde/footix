@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ACTIVITY_ICON, timeAgo } from './display';
+import { BellIcon } from '../components/icons';
+import { ActivityGlyph, timeAgo } from './display';
 import { useNotifications } from './NotificationsContext';
 
 /**
@@ -36,7 +37,7 @@ export function NotificationBell() {
         aria-label="Notifications"
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
       >
-        <span className="text-lg">🔔</span>
+        <BellIcon className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -62,7 +63,7 @@ export function NotificationBell() {
                     }}
                     className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50"
                   >
-                    <span className="text-lg leading-none">{ACTIVITY_ICON[activity.type]}</span>
+                    <ActivityGlyph type={activity.type} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-slate-800">{activity.title}</span>
                       <span className="block text-sm text-slate-600">{activity.body}</span>

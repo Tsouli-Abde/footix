@@ -1,14 +1,15 @@
 // Schéma Footix.
 //
-// SQLite ne supporte pas les enums Prisma, donc les champs "énumérés" sont des
-// String dont les valeurs autorisées sont validées côté API (voir src/domain.ts).
+// Les champs "énumérés" restent des String validés côté API (voir src/domain.ts)
+// plutôt que des enums Postgres : c'est plus simple à faire évoluer et ça garde
+// la validation au même endroit.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

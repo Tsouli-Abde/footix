@@ -1,5 +1,6 @@
 import { AVAILABILITY_LABELS } from '../lib/availability';
 import { AVAILABILITY_VALUES, type Availability, type FootixEvent } from '../types';
+import { CloseIcon } from './icons';
 
 const COLUMN_STYLES: Record<Availability, { header: string; chip: string }> = {
   oui: { header: 'text-green-700', chip: 'bg-green-50 text-green-800 ring-green-200' },
@@ -55,7 +56,7 @@ export function AnswerList({ event, onRemove }: Props) {
                       title={`Retirer ${person.name}`}
                       className="text-current opacity-40 hover:opacity-100"
                     >
-                      ✕
+                      <CloseIcon className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </li>

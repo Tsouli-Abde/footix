@@ -13,12 +13,13 @@ frontend/dev-dist/
 .env.*
 !.env.example
 
-# Base SQLite locale
+# Bases locales (héritage SQLite + dumps éventuels)
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
 backend/prisma/data/
+*.sql.bak
 
 # Logs
 *.log
