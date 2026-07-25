@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../db.js';
 import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor } from '../domain.js';
 import { conflict, notFound, route } from '../http.js';
+import { notifyEventOpen } from '../push.js';
 import { createEventSchema } from '../schemas.js';
 import { eventInclude, serializeEvent, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
@@ -62,6 +63,9 @@ eventsRouter.post(
       },
       include: eventInclude,
     });
+
+    // On prévient l'équipe qu'un sondage est ouvert, sans bloquer la réponse.
+    void notifyEventOpen(event);
 
     res.status(201).json({ event: serializeEventForOrganizer(event) });
   }),

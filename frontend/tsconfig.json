@@ -15,5 +15,8 @@
     "resolveJsonModule": true,
     "types": ["vite/client"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Le service worker cible l'environnement WebWorker, pas le DOM : il a son
+  // propre tsconfig (tsconfig.worker.json) et vite-plugin-pwa le compile à part.
+  "exclude": ["src/sw.ts"]
 }

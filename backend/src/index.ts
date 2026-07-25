@@ -1,3 +1,4 @@
+import './env.js'; // doit rester en premier : charge .env avant tout le reste
 import { createApp } from './app.js';
 import { prisma } from './db.js';
 

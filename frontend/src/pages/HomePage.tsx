@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { NotificationToggle } from '../components/NotificationToggle';
 import { Badge, Button, Card, PageState } from '../components/ui';
 import { eventTitle, formatCountdown, formatMatchDate, WEEKDAYS } from '../lib/dates';
 import type { EventSummary, RecurrenceTemplate } from '../types';
@@ -34,6 +35,8 @@ export function HomePage() {
           <Button>Lancer un sondage</Button>
         </Link>
       </div>
+
+      <NotificationToggle />
 
       {events.length === 0 ? (
         <Card className="text-center">

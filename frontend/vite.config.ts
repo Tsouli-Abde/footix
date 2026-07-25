@@ -10,6 +10,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      // Service worker écrit à la main (src/sw.ts) pour gérer les notifications
+      // push, que la génération automatique de Workbox ne permet pas.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        // Les réponses de l'API ne doivent jamais être mises en cache.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+      },
+      devOptions: { enabled: true, type: 'module' },
       manifest: {
         name: 'Footix, le foot du vendredi',
         short_name: 'Footix',
@@ -24,11 +34,6 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-      },
-      workbox: {
-        // L'app est un outil de vote : les réponses de l'API ne doivent jamais
-        // être servies depuis le cache, sous peine d'afficher des votes périmés.
-        navigateFallbackDenylist: [/^\/api/],
       },
     }),
   ],

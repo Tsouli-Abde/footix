@@ -4,6 +4,7 @@
  * Lancé une fois par jour (CronJob Kubernetes ou `npm run generate-recurring`).
  * L'opération est idempotente, le relancer ne crée pas de doublon.
  */
+import '../env.js'; // doit rester en premier : charge .env avant tout le reste
 import { prisma } from '../db.js';
 import { generateDueEvents } from '../recurrence.js';
 

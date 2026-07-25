@@ -4,6 +4,7 @@ import { errorHandler } from './http.js';
 import { answersRouter } from './routes/answers.js';
 import { eventsRouter } from './routes/events.js';
 import { manageRouter } from './routes/manage.js';
+import { pushRouter } from './routes/push.js';
 import { templatesRouter } from './routes/templates.js';
 
 export function createApp() {
@@ -16,7 +17,7 @@ export function createApp() {
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
-  app.use('/api', eventsRouter, answersRouter, manageRouter, templatesRouter);
+  app.use('/api', eventsRouter, answersRouter, manageRouter, templatesRouter, pushRouter);
 
   app.use((_req, res) => res.status(404).json({ error: 'Route inconnue' }));
   app.use(errorHandler);

@@ -78,6 +78,29 @@ une équipe et des matchs passés), avec les liens affichés en sortie :
 cd backend && npm run seed && npm run seed:demo
 ```
 
+## Notifications push
+
+En plus du lien partagé sur Teams, on peut recevoir une **notification push** quand un
+sondage s'ouvre, même téléphone verrouillé et app fermée. C'est opt-in : un bouton
+« Être prévenu des nouveaux matchs » sur l'accueil, qui demande la permission puis abonne
+le navigateur.
+
+Ça repose sur la Web Push API (VAPID) : le service worker (`frontend/src/sw.ts`) affiche la
+notification, le backend (`backend/src/push.ts`) l'envoie à tous les abonnés à la création
+d'un sondage — y compris ceux générés automatiquement par le cron.
+
+Pour l'activer, il faut une paire de clés VAPID côté backend :
+
+```bash
+cd backend && npx web-push generate-vapid-keys
+```
+
+puis renseigner `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` dans `backend/.env` (voir
+`.env.example`). Sans ces clés, tout le reste fonctionne et le bouton se cache tout seul.
+
+Deux limites à connaître : le push web exige un contexte sécurisé (HTTPS, ou `localhost` en
+dev), et sur **iOS** il ne marche que si l'app est **installée sur l'écran d'accueil**.
+
 ## Tests
 
 Le backend est couvert par Vitest : l'algo de recommandation et les règles

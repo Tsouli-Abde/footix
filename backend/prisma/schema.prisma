@@ -89,6 +89,23 @@ model Participant {
   @@unique([eventId, nameKey])
 }
 
+/// Un navigateur abonné aux notifications push (Web Push API).
+///
+/// Pas de compte : on garde juste de quoi pousser un message vers ce navigateur.
+/// L'abonnement est global à l'équipe, chacun s'abonne une fois depuis son appareil.
+model PushSubscription {
+  id String @id @default(cuid())
+
+  /// URL d'envoi fournie par le navigateur, unique par appareil/navigateur.
+  endpoint String @unique
+
+  /// Clés de chiffrement du message (fournies par le navigateur à l'abonnement).
+  p256dh String
+  auth   String
+
+  createdAt DateTime @default(now())
+}
+
 /// Modèle du rendez-vous hebdomadaire, utilisé par le job qui crée
 /// automatiquement le sondage de la semaine (src/jobs/generate-recurring.ts).
 model RecurrenceTemplate {

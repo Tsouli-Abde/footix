@@ -102,4 +102,12 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }).then((r) => r.template),
+
+  pushKey: () => request<{ enabled: boolean; key: string | null }>('/push/key'),
+
+  pushSubscribe: (subscription: unknown) =>
+    request<{ ok: true }>('/push/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
+
+  pushUnsubscribe: (endpoint: string) =>
+    request<{ ok: true }>('/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) }),
 };
