@@ -14,7 +14,8 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - '8080:80'
+      # 8080 est souvent pris par un autre service local, on expose sur 8090.
+      - '8090:80'
     depends_on:
       - backend
     restart: unless-stopped

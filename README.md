@@ -84,7 +84,7 @@ cd backend && npm run seed && npm run seed:demo
 docker compose up -d --build
 ```
 
-L'app est servie sur http://localhost:8080. Nginx sert le front et proxifie `/api` vers le
+L'app est servie sur http://localhost:8090. Nginx sert le front et proxifie `/api` vers le
 backend, donc tout est sur la même origine et il n'y a pas de CORS à configurer. Les routes
 type `/e/<token>` fonctionnent en accès direct grâce au fallback SPA de nginx.
 

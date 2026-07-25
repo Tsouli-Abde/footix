@@ -4,17 +4,14 @@
  * `npm run seed`, sans effet si le modèle existe déjà.
  */
 import { prisma } from '../db.js';
-import { generateToken } from '../domain.js';
-import { generateDueEvents } from '../recurrence.js';
+import { generateToken, occurrenceKeyFor } from '../domain.js';
+import { nextMatchDate } from '../recurrence.js';
 
 const TITLE = 'Foot hebdo du vendredi';
 
-const existing = await prisma.recurrenceTemplate.findFirst({ where: { title: TITLE } });
-
-if (existing) {
-  console.log('Le rendez-vous du vendredi existe déjà, rien à faire.');
-} else {
-  const template = await prisma.recurrenceTemplate.create({
+const template =
+  (await prisma.recurrenceTemplate.findFirst({ where: { title: TITLE } })) ??
+  (await prisma.recurrenceTemplate.create({
     data: {
       title: TITLE,
       description: 'Le match de la semaine, sur la pause déj.',
@@ -23,20 +20,31 @@ if (existing) {
       leadTimeDays: 3, // le sondage s'ouvre le mardi
       organizerToken: generateToken(),
     },
-  });
+  }));
 
-  console.log(`Rendez-vous créé, lien de gestion : /recurrence/${template.organizerToken}`);
-}
+console.log(`Rendez-vous, lien de gestion : /recurrence/${template.organizerToken}`);
 
-// On force la génération de la prochaine occurrence même si le délai n'est pas
-// atteint, histoire d'avoir tout de suite un sondage sous les yeux.
-const soon = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-const { created } = await generateDueEvents(soon);
+// On crée directement l'occurrence à venir, sans passer par la porte du délai :
+// on veut un sondage sous les yeux quelle que soit la date d'exécution du seed.
+const matchDate = nextMatchDate(template);
+const occurrenceKey = occurrenceKeyFor(matchDate);
 
-for (const { eventId, publicToken } of created) {
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
-  console.log(`Sondage de la semaine, lien de réponse    : /e/${publicToken}`);
-  console.log(`Sondage de la semaine, lien organisateur  : /manage/${event.organizerToken}`);
-}
+const event =
+  (await prisma.event.findUnique({ where: { occurrenceKey } })) ??
+  (await prisma.event.create({
+    data: {
+      title: null, // sans titre, c'est la date qui sert d'intitulé
+      type: 'recurrent',
+      recurrenceTemplateId: template.id,
+      matchDate,
+      occurrenceKey,
+      voteDeadline: new Date(matchDate.getTime() - template.deadlineHoursBefore * 60 * 60 * 1000),
+      publicToken: generateToken(),
+      organizerToken: generateToken(),
+    },
+  }));
+
+console.log(`Sondage de la semaine, lien de réponse   : /e/${event.publicToken}`);
+console.log(`Sondage de la semaine, lien organisateur : /manage/${event.organizerToken}`);
 
 await prisma.$disconnect();
