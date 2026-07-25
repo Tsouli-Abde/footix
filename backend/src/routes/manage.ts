@@ -47,7 +47,9 @@ manageRouter.patch(
     const updated = await prisma.event.update({
       where: { id: event.id },
       data: {
-        title: input.title ?? undefined,
+        // Champ absent = on ne touche pas ; champ vide = on repasse à null (la
+        // date sert alors d'intitulé), comme à la création.
+        title: input.title === undefined ? undefined : input.title || null,
         description: input.description === undefined ? undefined : input.description,
         matchDate,
         occurrenceKey,

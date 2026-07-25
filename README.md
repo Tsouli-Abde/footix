@@ -78,11 +78,23 @@ une équipe et des matchs passés), avec les liens affichés en sortie :
 cd backend && npm run seed && npm run seed:demo
 ```
 
+## Tests
+
+Le backend est couvert par Vitest : l'algo de recommandation et les règles
+transverses en unitaire, les routes en intégration sur une base SQLite jetable
+(migrée à part, la base de dev n'est jamais touchée).
+
+```bash
+cd backend && npm test
+```
+
 ## Déploiement
 
 ```bash
 docker compose up -d --build
 ```
+
+L'app est servie sur http://localhost:8090 (8080 étant souvent déjà pris en local).
 
 L'app est servie sur http://localhost:8090. Nginx sert le front et proxifie `/api` vers le
 backend, donc tout est sur la même origine et il n'y a pas de CORS à configurer. Les routes
