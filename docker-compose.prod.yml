@@ -1,10 +1,18 @@
-# Déploiement avec Caddy en frontal (TLS automatique).
+# Déploiement autonome, avec Caddy en frontal (TLS automatique).
 #
 #   FOOTIX_DOMAIN=footix.example.duckdns.org docker compose -f docker-compose.prod.yml up -d --build
 #
 # Contrairement au compose de dev, aucun service applicatif n'est exposé
 # directement : seul Caddy publie des ports, tout le reste reste sur le réseau
 # interne. Les variables sensibles se mettent dans un fichier .env à la racine.
+#
+# Si un autre Caddy (système, ou un autre projet) tient déjà les ports 80/443
+# sur la machine, ne pas utiliser ce fichier seul : le superposer avec
+# docker-compose.shared.yml, qui désactive ce Caddy embarqué et n'expose le
+# frontend que sur la boucle locale. Voir ce fichier et le README.
+
+# Nom de projet fixé, pour les mêmes raisons que dans docker-compose.yml.
+name: footix
 
 services:
   db:

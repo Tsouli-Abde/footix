@@ -1,0 +1,34 @@
+# Surcouche pour déployer footix sur une machine où un autre Caddy (système,
+# ou celui d'un autre projet Docker Compose) tient déjà les ports 80 et 443.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.shared.yml up -d --build
+#
+# Deux choses changent par rapport au déploiement autonome :
+#
+# 1. Le Caddy embarqué de footix ne démarre plus (profil jamais activé). Le
+#    Caddy déjà en place sur la machine sert de frontal pour tout le monde,
+#    footix compris : voir deploy/Caddyfile.snippet pour le bloc à lui ajouter.
+#
+# 2. Le frontend est publié sur 127.0.0.1:8095 au lieu de rester interne.
+#    C'est le seul port nécessaire : /api/ est déjà proxifié vers le backend
+#    en interne par le conteneur frontend (frontend/nginx.conf), donc le
+#    backend n'a besoin d'aucun port public.
+#
+# 8095 est choisi loin de toute plage déjà utilisée par un autre projet sur ce
+# type de machine (par exemple 8080-8083 pour un gateway/player/game/score).
+# Avant de lancer, vérifier qu'il est bien libre :
+#   ss -ltn | grep 8095   (ou : docker compose port frontend 80, après coup)
+# Si ce n'est pas le cas, changer le port ici ET dans deploy/Caddyfile.snippet.
+#
+# FOOTIX_DOMAIN doit quand même être défini dans .env même si ce Caddy-ci ne
+# démarre pas : Compose interpole les variables au moment de lire le fichier,
+# avant de savoir quels services vont réellement tourner. N'importe quelle
+# valeur convient, elle n'est plus utilisée une fois ce Caddy désactivé.
+
+services:
+  caddy:
+    profiles: ['disabled-in-favor-of-shared-caddy']
+
+  frontend:
+    ports:
+      - '127.0.0.1:8095:80'

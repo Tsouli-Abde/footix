@@ -175,6 +175,36 @@ docker compose -f docker-compose.prod.yml up -d --build
 Le domaine doit pointer sur la machine et les ports 80 et 443 doivent être ouverts, sinon
 Let's Encrypt ne peut pas valider. La config se trouve dans `deploy/Caddyfile`.
 
+### Déploiement sur une machine qui sert déjà un autre site
+
+Si un Caddy (système, ou celui d'un autre projet Docker Compose) tient déjà les ports 80 et
+443, ne pas lancer le Caddy embarqué de footix par-dessus : il échouerait à démarrer (port déjà
+pris), ou pire, s'il gagnait la course, couperait l'autre site.
+
+La surcouche `docker-compose.shared.yml` désactive le Caddy de footix et ne publie que le
+frontend, sur la boucle locale :
+
+```bash
+cp .env.example .env   # FOOTIX_DOMAIN peut valoir n'importe quoi ici, il n'est plus utilisé
+docker compose -f docker-compose.prod.yml -f docker-compose.shared.yml up -d --build
+curl 127.0.0.1:8095            # doit répondre
+curl 127.0.0.1:8095/api/health # idem, proxifié en interne vers le backend
+```
+
+Un seul port suffit : le conteneur frontend proxifie déjà `/api/` vers le backend sur le
+réseau Docker interne (`frontend/nginx.conf`), le backend n'a donc besoin d'aucun port public.
+
+Reste à faire connaître footix au Caddy déjà en place : coller le bloc de
+`deploy/Caddyfile.snippet` dans son Caddyfile, `caddy validate`, puis `systemctl reload caddy`
+(reload, pas restart, pour ne pas couper les sites déjà servis). Ce fichier système est hors
+de ce repo, cette étape se fait à la main sur la machine.
+
+Avant de déployer, vérifier que le port choisi (8095) est bien libre sur la machine et ne
+recoupe aucun port déjà utilisé par l'autre projet (`ss -ltn`), et que le nom de projet Docker
+Compose de l'autre application est lui aussi fixé (`name:` dans son compose file) — sinon le
+nommage de ses conteneurs et volumes dépend du nom du dossier où il est cloné, ce qui peut
+changer d'une machine à l'autre.
+
 Passer à Kubernetes (k3s + DuckDNS, cf. `deploiement-docker-k8s-duckdns.md`) reste possible :
 les images sont les mêmes, il faut un Deployment par service, un Ingress, et un CronJob à la
 place du service `cron`.

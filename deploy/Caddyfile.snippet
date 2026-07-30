@@ -1,0 +1,33 @@
+# Bloc à ajouter au Caddyfile déjà en place sur la machine, à côté de celui
+# qui sert les autres projets (ex. lemotjuste.duckdns.org). Ne remplace rien,
+# s'ajoute en plus, un bloc par domaine dans le même fichier.
+#
+# Ne s'utilise qu'avec docker-compose.shared.yml (voir ce fichier) : c'est lui
+# qui publie le frontend sur 127.0.0.1:8095 et désactive le Caddy embarqué de
+# footix pour laisser la place à celui-ci.
+#
+# Après avoir collé ce bloc dans le Caddyfile système :
+#   caddy validate --config /chemin/vers/Caddyfile
+#   sudo systemctl reload caddy   # reload, pas restart : les autres sites
+#                                  # servis par ce Caddy ne sont pas coupés
+#
+# Rien à ouvrir côté pare-feu : 80 et 443 sont déjà ouverts pour l'autre
+# projet, et Caddy obtient son propre certificat par domaine automatiquement.
+
+footix.duckdns.org {
+	encode zstd gzip
+
+	reverse_proxy 127.0.0.1:8095
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

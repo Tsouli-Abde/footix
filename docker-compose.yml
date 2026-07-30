@@ -1,3 +1,8 @@
+# Nom de projet fixé : les conteneurs, volumes et le réseau gardent le préfixe
+# "footix" quel que soit le nom du dossier où le repo est cloné. Important dès
+# qu'on partage une machine avec d'autres projets Docker Compose.
+name: footix
+
 services:
   db:
     image: postgres:16-alpine
