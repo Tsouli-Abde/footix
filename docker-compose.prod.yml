@@ -1,0 +1,89 @@
+# Déploiement avec Caddy en frontal (TLS automatique).
+#
+#   FOOTIX_DOMAIN=footix.example.duckdns.org docker compose -f docker-compose.prod.yml up -d --build
+#
+# Contrairement au compose de dev, aucun service applicatif n'est exposé
+# directement : seul Caddy publie des ports, tout le reste reste sur le réseau
+# interne. Les variables sensibles se mettent dans un fichier .env à la racine.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: footix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?definir POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: footix
+      TZ: Europe/Paris
+    volumes:
+      - footix-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U footix']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD}@db:5432/footix?schema=public
+      TZ: Europe/Paris
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      FOOTIX_DOMAIN: ${FOOTIX_DOMAIN:?definir FOOTIX_DOMAIN, par exemple footix.exemple.duckdns.org}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Les certificats survivent aux redémarrages, sinon Let's Encrypt finit
+      # par limiter le nombre de demandes.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+  # Deux jobs planifiés : la création des sondages récurrents (une fois par jour)
+  # et le récapitulatif de la veille (toutes les heures, car il dépend de l'heure
+  # du match). Les deux sont idempotents.
+  cron:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD}@db:5432/footix?schema=public
+      TZ: Europe/Paris
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
+    command: >
+      sh -c 'while true; do
+        node dist/jobs/generate-recurring.js;
+        node dist/jobs/send-reminders.js;
+        sleep 3600;
+      done'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  footix-data:
+  caddy-data:
+  caddy-config:

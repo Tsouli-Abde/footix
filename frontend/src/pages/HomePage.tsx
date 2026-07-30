@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { NotificationToggle } from '../components/NotificationToggle';
 import { Badge, Button, Card, PageState } from '../components/ui';
-import { eventTitle, formatCountdown, formatMatchDate, WEEKDAYS } from '../lib/dates';
+import { eventTitle, formatCountdown, formatMatchDate, formatMatchSlot, WEEKDAYS } from '../lib/dates';
 import type { EventSummary, RecurrenceTemplate } from '../types';
 
 export function HomePage() {
@@ -57,7 +57,9 @@ export function HomePage() {
                       {event.votingOpen ? 'Ouvert' : 'Deadline passée'}
                     </Badge>
                   </div>
-                  {event.title && <p className="mt-1 text-sm text-slate-600">{formatMatchDate(event.matchDate)}</p>}
+                  {(event.title || event.hasTime) && (
+                    <p className="mt-1 text-sm text-slate-600">{formatMatchSlot(event)}</p>
+                  )}
                   <p className="mt-3 text-xs text-slate-500">
                     {event.counts.oui} présent{event.counts.oui > 1 ? 's' : ''}
                     {event.counts.si_besoin > 0 && `, ${event.counts.si_besoin} si besoin`} · réponses{' '}

@@ -1,0 +1,35 @@
+# Caddy sert de frontal : il termine le TLS et route vers les deux services.
+#
+# Le certificat Let's Encrypt est obtenu et renouvelé tout seul, à condition que
+# le domaine pointe bien sur la machine et que les ports 80 et 443 soient ouverts.
+# Le domaine se règle avec la variable FOOTIX_DOMAIN (voir docker-compose.prod.yml).
+
+{$FOOTIX_DOMAIN} {
+	encode zstd gzip
+
+	# L'API d'abord : plus spécifique que la règle qui suit.
+	handle /api/* {
+		reverse_proxy backend:3001
+	}
+
+	# Tout le reste part vers le conteneur qui sert l'application.
+	# Le repli SPA y est déjà géré, les liens type /e/<token> fonctionnent donc
+	# en accès direct comme après un rafraîchissement.
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	# En-têtes de sécurité de base. Pas de HSTS agressif tant que le domaine
+	# n'est pas définitif, pour ne pas se retrouver coincé sur un essai.
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

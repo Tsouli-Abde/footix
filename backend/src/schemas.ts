@@ -8,11 +8,21 @@ const venueId = z.enum(Object.keys(VENUES) as [string, ...string[]]);
  * valeurs par défaut côté route, pour qu'on puisse créer un "foot vendredi ?"
  * en un clic.
  */
+const matchTime = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Heure attendue au format HH:MM')
+  .nullable()
+  .optional();
+
 export const createEventSchema = z
   .object({
     title: z.string().trim().max(120).nullable().optional(),
     description: z.string().trim().max(500).nullable().optional(),
     matchDate: z.coerce.date(),
+    /** Heure explicite. Absente, on garde midi sans l'afficher. */
+    matchTime,
+    /** Prénom du créateur, affiché comme organisateur. */
+    organizerName: z.string().trim().max(60).nullable().optional(),
     voteDeadline: z.coerce.date().optional(),
   })
   .refine((data) => !data.voteDeadline || data.voteDeadline <= data.matchDate, {
@@ -24,6 +34,7 @@ export const updateEventSchema = z.object({
   title: z.string().trim().max(120).nullable().optional(),
   description: z.string().trim().max(500).nullable().optional(),
   matchDate: z.coerce.date().optional(),
+  matchTime,
   voteDeadline: z.coerce.date().optional(),
 });
 
@@ -41,6 +52,12 @@ export const resultSchema = z.object({
 export const answerSchema = z.object({
   name: z.string().trim().min(2, 'Il me faut au moins deux lettres').max(60),
   availability: z.enum(AVAILABILITY_VALUES),
+  /**
+   * Vrai quand la personne confirme être un homonyme et non celle qui a déjà
+   * répondu sous ce prénom. On crée alors une seconde entrée plutôt que
+   * d'écraser la réponse de l'autre.
+   */
+  distinct: z.boolean().optional(),
 });
 
 export const createTemplateSchema = z.object({

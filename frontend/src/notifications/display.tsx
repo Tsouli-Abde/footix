@@ -1,9 +1,10 @@
-import { BanIcon, CheckIcon, MapPinIcon, MegaphoneIcon, TrophyIcon } from '../components/icons';
+import { BanIcon, CheckIcon, ClockIcon, MapPinIcon, MegaphoneIcon, TrophyIcon } from '../components/icons';
 import type { ActivityType } from '../types';
 
 const ICON: Record<ActivityType, typeof MegaphoneIcon> = {
   vote_ouvert: MegaphoneIcon,
   reponse: CheckIcon,
+  rappel: ClockIcon,
   cloture: MapPinIcon,
   score: TrophyIcon,
   annulation: BanIcon,
@@ -12,6 +13,7 @@ const ICON: Record<ActivityType, typeof MegaphoneIcon> = {
 const TINT: Record<ActivityType, string> = {
   vote_ouvert: 'bg-green-100 text-green-700',
   reponse: 'bg-sky-100 text-sky-700',
+  rappel: 'bg-amber-100 text-amber-700',
   cloture: 'bg-green-100 text-green-700',
   score: 'bg-amber-100 text-amber-700',
   annulation: 'bg-slate-100 text-slate-500',

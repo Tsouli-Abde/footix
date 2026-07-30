@@ -33,6 +33,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type CreateEventInput = {
   matchDate: string;
+  /** Heure « HH:MM ». Absente, on garde midi sans l'afficher. */
+  matchTime?: string | null;
+  organizerName?: string | null;
   title?: string | null;
   description?: string | null;
   voteDeadline?: string;
@@ -47,10 +50,11 @@ export const api = {
 
   getEvent: (publicToken: string) => request<{ event: FootixEvent }>(`/events/${publicToken}`).then((r) => r.event),
 
-  answer: (publicToken: string, name: string, availability: Availability) =>
+  /** `distinct` vaut vrai quand la personne a confirmé être un homonyme. */
+  answer: (publicToken: string, name: string, availability: Availability, distinct = false) =>
     request<{ participantId: string; event: FootixEvent }>(`/events/${publicToken}/answers`, {
       method: 'POST',
-      body: JSON.stringify({ name, availability }),
+      body: JSON.stringify({ name, availability, distinct }),
     }),
 
   removeParticipant: (publicToken: string, participantId: string) =>

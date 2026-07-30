@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/db.js';
-import { resetDb } from './helpers.js';
+import { inDays, resetDb } from './helpers.js';
 
 const request = supertest(createApp());
 
@@ -10,7 +10,7 @@ beforeEach(resetDb);
 afterAll(() => prisma.$disconnect());
 
 async function openEvent() {
-  const res = await request.post('/api/events').send({ matchDate: '2026-08-07' });
+  const res = await request.post('/api/events').send({ matchDate: inDays(7) });
   return res.body.event as { publicToken: string; organizerToken: string };
 }
 

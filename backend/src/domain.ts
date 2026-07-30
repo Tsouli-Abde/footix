@@ -49,13 +49,32 @@ export const MIN_PLAYERS = 6;
 /** À partir de ce nombre de joueurs sûrs, le Five devient trop petit. */
 export const SCEAUX_THRESHOLD = 12;
 
+/// Au delà, même le parc devient ingérable : il vaut mieux prévenir.
+export const CROWD_THRESHOLD = 24;
+
 export type Counts = Record<Availability, number>;
+
+/**
+ * Comment se présente le match. Sert à la fois à colorer l'affichage et à
+ * décider du ton du message, sans que le front ait à redevenir l'algorithme.
+ *
+ * - `vide` : personne n'a répondu
+ * - `insuffisant` : trop peu de monde, même en comptant les indécis
+ * - `incertain` : ça ne passe que si les indécis se confirment
+ * - `ok` : assez de monde, le lieu est clair
+ * - `foule` : tellement de monde qu'il faut s'organiser
+ */
+export type Outlook = 'vide' | 'insuffisant' | 'incertain' | 'ok' | 'foule';
 
 export type Recommendation = {
   venueId: VenueId | null;
+  outlook: Outlook;
   /** Une phrase courte qui explique le choix, affichée telle quelle. */
   reason: string;
 };
+
+/** « 1 joueur », « 3 joueurs », et laisse tranquille les mots déjà en s (indécis). */
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 && !word.endsWith('s') ? 's' : ''}`;
 
 /**
  * Choix du lieu à partir du nombre de réponses.
@@ -69,17 +88,38 @@ export function recommendVenue(counts: Counts): Recommendation {
   const maybe = counts.si_besoin;
   const potential = sure + maybe;
 
+  if (sure === 0 && maybe === 0) {
+    return {
+      venueId: null,
+      outlook: 'vide',
+      reason:
+        counts.non > 0
+          ? 'Personne de dispo pour l’instant.'
+          : 'Personne n’a encore répondu.',
+    };
+  }
+
   if (potential < MIN_PLAYERS) {
     const manquants = MIN_PLAYERS - potential;
     return {
       venueId: null,
-      reason: `Il manque encore ${manquants} joueur${manquants > 1 ? 's' : ''} pour que ça vaille le coup.`,
+      outlook: 'insuffisant',
+      reason: `Il manque encore ${plural(manquants, 'joueur')} pour que ça vaille le coup.`,
+    };
+  }
+
+  if (sure >= CROWD_THRESHOLD) {
+    return {
+      venueId: 'sceaux',
+      outlook: 'foule',
+      reason: `${sure} joueurs, il va falloir faire tourner ou monter trois équipes.`,
     };
   }
 
   if (sure >= SCEAUX_THRESHOLD) {
     return {
       venueId: 'sceaux',
+      outlook: 'ok',
       reason: `${sure} joueurs sûrs, autant prendre le grand terrain.`,
     };
   }
@@ -87,30 +127,44 @@ export function recommendVenue(counts: Counts): Recommendation {
   if (sure < MIN_PLAYERS) {
     return {
       venueId: 'five',
-      reason: `Seulement ${sure} joueur${sure > 1 ? 's' : ''} sûr${sure > 1 ? 's' : ''}, ça dépend des ${maybe} indécis.`,
+      outlook: 'incertain',
+      reason: `Seulement ${plural(sure, 'joueur')} sûr${sure > 1 ? 's' : ''}, ça dépend des ${plural(maybe, 'indécis')}.`,
     };
   }
 
   if (potential >= SCEAUX_THRESHOLD) {
     return {
       venueId: 'five',
-      reason: `${sure} joueurs sûrs. Si les ${maybe} indécis se confirment, on passe au parc.`,
+      outlook: 'ok',
+      reason: `${sure} joueurs sûrs. Si les ${plural(maybe, 'indécis')} se confirment, on passe au parc.`,
     };
   }
 
   return {
     venueId: 'five',
+    outlook: 'ok',
     reason: `${sure} joueurs, c'est le format qui colle.`,
   };
 }
 
-/** On joue sur la pause déj, donc l'heure ne se saisit ni ne s'affiche. */
+/** L'heure par défaut, celle de la pause déj. */
 export const MATCH_HOUR = 12;
 
 /** Ramène une date au créneau de midi, quelle que soit l'heure reçue. */
 export function atMatchHour(date: Date): Date {
   const result = new Date(date);
   result.setHours(MATCH_HOUR, 0, 0, 0);
+  return result;
+}
+
+/**
+ * Applique une heure « HH:MM » à un jour donné.
+ * Sert quand l'organisateur veut un créneau autre que la pause déj.
+ */
+export function withTime(date: Date, time: string): Date {
+  const [hours, minutes] = time.split(':').map(Number);
+  const result = new Date(date);
+  result.setHours(hours, minutes, 0, 0);
   return result;
 }
 

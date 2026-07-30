@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor } from '../domain.js';
+import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor, withTime } from '../domain.js';
 import { announceVoteOpen } from '../activity.js';
-import { conflict, notFound, route } from '../http.js';
+import { badRequest, conflict, notFound, route } from '../http.js';
 import { createEventSchema } from '../schemas.js';
 import { eventInclude, serializeEvent, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
@@ -42,13 +42,23 @@ eventsRouter.post(
   route(async (req, res) => {
     const input = createEventSchema.parse(req.body);
 
-    const matchDate = atMatchHour(input.matchDate);
+    // Heure explicite si l'organisateur en a choisi une, midi sinon.
+    const matchDate = input.matchTime ? withTime(input.matchDate, input.matchTime) : atMatchHour(input.matchDate);
     const occurrenceKey = occurrenceKeyFor(matchDate);
+
+    // Un sondage pour un match déjà passé n'a pas de sens et fausse l'historique.
+    if (matchDate.getTime() < Date.now()) {
+      throw badRequest('Ce jour est déjà passé, choisis une date à venir');
+    }
 
     const existing = await prisma.event.findUnique({ where: { occurrenceKey }, include: eventInclude });
     if (existing) {
       throw conflict('Un sondage existe déjà pour ce jour', { event: serializeEventSummary(existing) });
     }
+
+    // Une deadline déjà dépassée fermerait le vote avant qu'il ne commence.
+    const voteDeadline = input.voteDeadline ?? defaultDeadlineFor(matchDate);
+    const usableDeadline = voteDeadline.getTime() > Date.now() ? voteDeadline : matchDate;
 
     const event = await prisma.event.create({
       data: {
@@ -56,8 +66,10 @@ eventsRouter.post(
         description: input.description ?? null,
         type: 'ponctuel',
         matchDate,
+        hasTime: Boolean(input.matchTime),
+        organizerName: input.organizerName?.trim() || null,
         occurrenceKey,
-        voteDeadline: input.voteDeadline ?? defaultDeadlineFor(matchDate),
+        voteDeadline: usableDeadline,
         publicToken: generateToken(),
         organizerToken: generateToken(),
       },

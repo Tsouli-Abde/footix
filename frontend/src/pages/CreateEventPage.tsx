@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { Alert, Button, Card, inputClass } from '../components/ui';
 import { defaultDeadlineFor, formatMatchDate, toDateInput, toDateTimeLocal, upcomingFridays } from '../lib/dates';
+import { rememberName, rememberedName } from '../lib/names';
 import type { EventSummary } from '../types';
 
 const FRIDAYS = upcomingFridays(3);
@@ -21,6 +22,9 @@ export function CreateEventPage() {
   const [title, setTitle] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [deadline, setDeadline] = useState<string | null>(null);
+  /** Heure explicite. Null tant qu'on garde le créneau habituel de midi. */
+  const [time, setTime] = useState<string | null>(null);
+  const [organizerName, setOrganizerName] = useState(rememberedName);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +39,13 @@ export function CreateEventPage() {
     try {
       const created = await api.createEvent({
         matchDate: matchDate.toISOString(),
+        matchTime: time || undefined,
+        organizerName: organizerName.trim() || undefined,
         title: title?.trim() || undefined,
         description: description?.trim() || undefined,
         voteDeadline: deadline ? new Date(deadline).toISOString() : undefined,
       });
+      if (organizerName.trim()) rememberName(organizerName.trim());
       navigate(`/manage/${created.organizerToken}`, { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -117,12 +124,43 @@ export function CreateEventPage() {
         )}
 
         <p className="text-sm text-slate-500">
-          On joue sur la pause déj, pas besoin de préciser l’heure. Les réponses ferment{' '}
-          {deadline ? 'à l’heure que tu as choisie' : 'la veille à 18h'}.
+          {time ? `Rendez-vous à ${time}.` : 'On joue sur la pause déj, pas besoin de préciser l’heure.'} Les réponses
+          ferment {deadline ? 'à l’heure que tu as choisie' : 'la veille à 18h'}.
+        </p>
+      </Card>
+
+      <Card className="space-y-2">
+        <label htmlFor="organizer" className="block text-sm font-medium text-slate-700">
+          Ton prénom
+        </label>
+        <input
+          id="organizer"
+          value={organizerName}
+          onChange={(e) => setOrganizerName(e.target.value)}
+          placeholder="Pour que l’équipe sache qui organise"
+          maxLength={60}
+          className={`${inputClass} sm:max-w-xs`}
+        />
+        <p className="text-xs text-slate-500">
+          Tu gardes la main sur ce sondage grâce à ton lien de gestion. Tout le monde peut voir les réponses.
         </p>
       </Card>
 
       <div className="space-y-3">
+        {time === null ? (
+          <OptionalButton onClick={() => setTime('12:00')}>+ Fixer une heure</OptionalButton>
+        ) : (
+          <OptionalField label="Heure du match" onRemove={() => setTime(null)}>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className={`${inputClass} sm:max-w-xs`}
+            />
+            <p className="mt-1 text-xs text-slate-500">Utile quand on sort du créneau habituel de midi.</p>
+          </OptionalField>
+        )}
+
         {title === null ? (
           <OptionalButton onClick={() => setTitle('')}>+ Changer le titre</OptionalButton>
         ) : (

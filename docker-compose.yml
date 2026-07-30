@@ -51,7 +51,12 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
-    command: sh -c 'while true; do node dist/jobs/generate-recurring.js; sleep 86400; done'
+    command: >
+      sh -c 'while true; do
+        node dist/jobs/generate-recurring.js;
+        node dist/jobs/send-reminders.js;
+        sleep 3600;
+      done'
     depends_on:
       db:
         condition: service_healthy

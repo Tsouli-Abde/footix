@@ -11,12 +11,25 @@ const shortDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'sho
 /** Intl produit "vendredi 7 août", on relève juste la première lettre. */
 const capitalizeFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-/** Le match est toujours sur la pause déj, donc on n'affiche jamais l'heure. */
+/** Le jour seul, sans heure : « Vendredi 7 août ». */
 export const formatMatchDate = (iso: string) => capitalizeFirst(matchDay.format(new Date(iso)));
+
+/**
+ * Le créneau tel qu'on veut le lire : le jour seul quand on joue à l'heure
+ * habituelle, jour et heure quand l'organisateur a fixé un autre créneau.
+ */
+export const formatMatchSlot = (event: { matchDate: string; hasTime?: boolean }) =>
+  event.hasTime ? capitalizeFirst(dayAndTime.format(new Date(event.matchDate))) : formatMatchDate(event.matchDate);
 
 /** Titre à afficher : celui saisi, ou la date à défaut, pour ne jamais avoir de vide. */
 export const eventTitle = (event: { title: string | null; matchDate: string }) =>
   event.title ?? formatMatchDate(event.matchDate);
+
+/** Vrai si le match a lieu dans les prochaines 24h, pour appuyer le message. */
+export function isTomorrowOrSooner(iso: string, now = Date.now()): boolean {
+  const diff = new Date(iso).getTime() - now;
+  return diff > 0 && diff <= 24 * 60 * 60 * 1000;
+}
 
 /** La deadline, elle, a besoin de son heure. */
 export const formatDeadlineDate = (iso: string) => capitalizeFirst(dayAndTime.format(new Date(iso)));

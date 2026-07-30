@@ -9,6 +9,23 @@ import { eventInclude, serializeEvent } from '../serializers.js';
 export const answersRouter = Router();
 
 /**
+ * Cherche un nom libre pour un homonyme : « Thomas » devient « Thomas (2) »,
+ * puis « Thomas (3) » si besoin. La limite arbitraire évite une boucle infinie
+ * si quelqu'un s'amuse à cliquer.
+ */
+async function nextFreeName(eventId: string, name: string, baseKey: string) {
+  for (let suffix = 2; suffix <= 20; suffix++) {
+    const candidate = `${name} (${suffix})`;
+    const candidateKey = normalizeName(candidate);
+    const taken = await prisma.participant.findUnique({
+      where: { eventId_nameKey: { eventId, nameKey: candidateKey } },
+    });
+    if (!taken) return { name: candidate, nameKey: candidateKey };
+  }
+  throw badRequest('Trop de personnes portent déjà ce prénom, ajoute une initiale');
+}
+
+/**
  * Envoi ou mise à jour d'une réponse.
  *
  * Pas de compte : on reconnaît quelqu'un à son prénom normalisé. Si tu ressaisis
@@ -23,16 +40,23 @@ answersRouter.post(
     if (!event) throw notFound('Sondage introuvable');
     if (!isVotingOpen(event)) throw conflict('Les réponses sont closes pour ce match');
 
-    const nameKey = normalizeName(input.name);
-    if (!nameKey) throw badRequest('Il me faut un prénom lisible');
+    const baseKey = normalizeName(input.name);
+    if (!baseKey) throw badRequest('Il me faut un prénom lisible');
+
+    // Deux personnes peuvent porter le même prénom. Par défaut on considère que
+    // c'est la même qui revient changer sa réponse ; si elle a confirmé être
+    // quelqu'un d'autre, on lui réserve un nom distinct plutôt que d'écraser.
+    const { name, nameKey } = input.distinct
+      ? await nextFreeName(event.id, input.name, baseKey)
+      : { name: input.name, nameKey: baseKey };
 
     const participant = await prisma.participant.upsert({
       where: { eventId_nameKey: { eventId: event.id, nameKey } },
-      create: { eventId: event.id, name: input.name, nameKey, availability: input.availability },
-      update: { name: input.name, availability: input.availability },
+      create: { eventId: event.id, name, nameKey, availability: input.availability },
+      update: { name, availability: input.availability },
     });
 
-    void announceAnswer(event, input.name, input.availability);
+    void announceAnswer(event, name, input.availability);
 
     const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id }, include: eventInclude });
     res.status(201).json({ participantId: participant.id, event: serializeEvent(updated) });

@@ -28,9 +28,17 @@ model Event {
   /// "ponctuel" | "recurrent"
   type String @default("ponctuel")
 
-  /// Jour du match. L'heure est fixée à midi et n'est jamais affichée :
-  /// on joue toujours sur la pause déj, ça n'a pas besoin d'être précisé.
+  /// Date et heure du match. Par défaut midi, l'heure habituelle de la pause déj.
   matchDate DateTime
+
+  /// Vrai si l'organisateur a explicitement fixé une heure. Dans ce cas on
+  /// l'affiche partout ; sinon on ne montre que le jour, pour ne pas encombrer
+  /// l'écran avec une info que tout le monde connaît déjà.
+  hasTime Boolean @default(false)
+
+  /// Prénom de la personne qui a créé le sondage. Purement informatif : ça
+  /// permet de savoir à qui s'adresser sans introduire de comptes.
+  organizerName String?
 
   /// Jour du match au format YYYY-MM-DD.
   /// Unique : c'est la garantie anti-doublon (un seul sondage par jour).
@@ -51,6 +59,10 @@ model Event {
 
   /// Deux mots sur le match, à côté du score.
   resultNote String?
+
+  /// Date d'envoi du récapitulatif de la veille. Sert de garde-fou au job :
+  /// tant qu'il est rempli, on ne renvoie pas le même rappel.
+  reminderSentAt DateTime?
 
   /// Token du lien partagé sur Teams (voir et répondre).
   publicToken String @unique

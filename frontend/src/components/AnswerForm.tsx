@@ -13,14 +13,17 @@ type Props = {
 /**
  * Une seule question : tu viens ou pas.
  *
- * Pas d'authentification, c'est le prénom qui identifie la personne. Ressaisir
- * le même prénom recharge sa réponse et la remplace.
+ * Pas d'authentification, c'est le prénom qui identifie la personne, comme sur
+ * Doodle. Ressaisir le même prénom recharge sa réponse et la remplace, sauf si
+ * la personne indique être un homonyme.
  */
 export function AnswerForm({ event, onAnswered }: Props) {
   const [name, setName] = useState(rememberedName);
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** L'utilisateur a confirmé être une autre personne portant le même prénom. */
+  const [isHomonym, setIsHomonym] = useState(false);
 
   const nameKey = normalizeName(name);
   const existing = useMemo(
@@ -31,16 +34,21 @@ export function AnswerForm({ event, onAnswered }: Props) {
   // Dès qu'on reconnaît la personne, on présélectionne sa réponse actuelle :
   // changer d'avis devient un seul clic.
   useEffect(() => {
-    if (existing) setAvailability(existing.availability);
-  }, [existing?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (existing && !isHomonym) setAvailability(existing.availability);
+  }, [existing?.id, isHomonym]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Changer de prénom annule la déclaration d'homonymie, qui ne vaut que pour
+  // le prénom sur lequel elle a été faite.
+  useEffect(() => setIsHomonym(false), [nameKey]);
 
   const send = async () => {
     if (!availability) return;
     setSending(true);
     setError(null);
     try {
-      const result = await api.answer(event.publicToken, name.trim(), availability);
+      const result = await api.answer(event.publicToken, name.trim(), availability, isHomonym);
       rememberName(name.trim());
+      setIsHomonym(false);
       onAnswered(result.event);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Envoi impossible, réessaie.');
@@ -49,11 +57,13 @@ export function AnswerForm({ event, onAnswered }: Props) {
     }
   };
 
+  const knownAnswer = existing && !isHomonym;
+
   return (
     <Card>
-      <h2 className="text-lg font-semibold">{existing ? 'Changer ta réponse' : 'Tu viens ?'}</h2>
+      <h2 className="text-lg font-semibold">{knownAnswer ? 'Changer ta réponse' : 'Tu viens ?'}</h2>
       <p className="mt-1 text-sm text-slate-500">
-        {existing
+        {knownAnswer
           ? `Tu as répondu ${AVAILABILITY_LABELS[existing.availability]}. Tu peux changer jusqu’à la deadline.`
           : 'Ton prénom, ta réponse, et c’est réglé.'}
       </p>
@@ -66,6 +76,29 @@ export function AnswerForm({ event, onAnswered }: Props) {
           autoComplete="given-name"
           className={`${inputClass} sm:max-w-xs`}
         />
+
+        {/* Deux personnes peuvent porter le même prénom. Plutôt que d'écraser en
+            silence la réponse de l'autre, on demande. */}
+        {existing && (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm">
+            {isHomonym ? (
+              <p className="text-sky-900">
+                Compris, tu es un autre {name.trim()}. Ta réponse sera ajoutée à part.{' '}
+                <button type="button" onClick={() => setIsHomonym(false)} className="font-medium underline">
+                  Non, c’est bien moi
+                </button>
+              </p>
+            ) : (
+              <p className="text-sky-900">
+                Un {existing.name} a déjà répondu {AVAILABILITY_LABELS[existing.availability].toLowerCase()}. Si c’est
+                toi, continue.{' '}
+                <button type="button" onClick={() => setIsHomonym(true)} className="font-medium underline">
+                  Je suis quelqu’un d’autre
+                </button>
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {AVAILABILITY_VALUES.map((value) => {
@@ -90,8 +123,8 @@ export function AnswerForm({ event, onAnswered }: Props) {
 
         {error && <Alert>{error}</Alert>}
 
-        <Button onClick={send} disabled={nameKey.length < 2 || !availability || sending}>
-          {sending ? 'Envoi...' : existing ? 'Mettre à jour' : 'Envoyer'}
+        <Button onClick={send} disabled={nameKey.length < 2 || !availability || sending} className="w-full sm:w-auto">
+          {sending ? 'Envoi...' : knownAnswer ? 'Mettre à jour' : 'Envoyer'}
         </Button>
       </div>
     </Card>

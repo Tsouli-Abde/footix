@@ -5,6 +5,9 @@ export type Availability = (typeof AVAILABILITY_VALUES)[number];
 
 export type Counts = Record<Availability, number>;
 
+/** Comment se présente le match, calculé côté serveur (voir backend/src/domain.ts). */
+export type Outlook = 'vide' | 'insuffisant' | 'incertain' | 'ok' | 'foule';
+
 export type Venue = {
   id: string;
   label: string;
@@ -27,13 +30,17 @@ export type FootixEvent = {
   description: string | null;
   type: 'ponctuel' | 'recurrent';
   matchDate: string;
+  /** Vrai si une heure a été fixée explicitement, sinon on n'affiche que le jour. */
+  hasTime: boolean;
+  /** Prénom de la personne qui a créé le sondage, si elle l'a donné. */
+  organizerName: string | null;
   voteDeadline: string;
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
   createdAt: string;
   publicToken: string;
   counts: Counts;
-  recommendation: { venue: Venue | null; reason: string };
+  recommendation: { venue: Venue | null; outlook: Outlook; reason: string };
   chosenVenue: Venue | null;
   score: string | null;
   resultNote: string | null;
@@ -48,6 +55,7 @@ export type EventSummary = {
   id: string;
   title: string | null;
   matchDate: string;
+  hasTime: boolean;
   voteDeadline: string;
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
@@ -60,7 +68,7 @@ export type EventSummary = {
   organizerToken?: string;
 };
 
-export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'cloture', 'score', 'annulation'] as const;
+export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export type Activity = {

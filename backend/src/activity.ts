@@ -12,7 +12,7 @@ import { pushToAll } from './push.js';
  * in-app pour ne pas spammer les téléphones.
  */
 
-export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'cloture', 'score', 'annulation'] as const;
+export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 type RecordInput = {
@@ -73,6 +73,19 @@ export const announceAnswer = (event: EventLike, name: string, availability: Ava
     body: `${name} ${AVAILABILITY_WORDS[availability]}.`,
     eventPublicToken: event.publicToken,
     push: false,
+  });
+
+/**
+ * Récapitulatif de la veille : où on en est et ce que ça donne.
+ * Moment fort, c'est le message qui décide si les gens viennent ou pas.
+ */
+export const announceReminder = (event: EventLike, body: string) =>
+  recordActivity({
+    type: 'rappel',
+    title: 'Le match de demain',
+    body,
+    eventPublicToken: event.publicToken,
+    push: true,
   });
 
 /** Clôture avec lieu retenu : moment fort. */

@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/db.js';
-import { resetDb } from './helpers.js';
+import { inDays, resetDb } from './helpers.js';
 
 const request = supertest(createApp());
 
@@ -10,7 +10,7 @@ beforeEach(resetDb);
 afterAll(() => prisma.$disconnect());
 
 async function openEvent() {
-  const res = await request.post('/api/events').send({ matchDate: '2026-08-07' });
+  const res = await request.post('/api/events').send({ matchDate: inDays(7) });
   return res.body.event as { publicToken: string; organizerToken: string };
 }
 
@@ -56,6 +56,32 @@ describe('réponses', () => {
     const res = await request.delete(`/api/events/${event.publicToken}/answers/${participantId}`);
     expect(res.status).toBe(200);
     expect(res.body.event.participants).toHaveLength(0);
+  });
+});
+
+describe('homonymes', () => {
+  it('écrase la réponse par défaut, comme si la personne revenait', async () => {
+    const event = await openEvent();
+    await request.post(`/api/events/${event.publicToken}/answers`).send({ name: 'Thomas', availability: 'oui' });
+    const res = await request
+      .post(`/api/events/${event.publicToken}/answers`)
+      .send({ name: 'Thomas', availability: 'non' });
+
+    expect(res.body.event.participants).toHaveLength(1);
+    expect(res.body.event.counts.non).toBe(1);
+  });
+
+  it('crée une entrée distincte quand la personne confirme être un autre Thomas', async () => {
+    const event = await openEvent();
+    await request.post(`/api/events/${event.publicToken}/answers`).send({ name: 'Thomas', availability: 'oui' });
+    const res = await request
+      .post(`/api/events/${event.publicToken}/answers`)
+      .send({ name: 'Thomas', availability: 'non', distinct: true });
+
+    expect(res.body.event.participants).toHaveLength(2);
+    expect(res.body.event.participants.map((p: { name: string }) => p.name)).toContain('Thomas (2)');
+    expect(res.body.event.counts.oui).toBe(1);
+    expect(res.body.event.counts.non).toBe(1);
   });
 });
 

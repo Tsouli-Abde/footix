@@ -78,6 +78,22 @@ une équipe et des matchs passés), avec les liens affichés en sortie :
 cd backend && npm run seed && npm run seed:demo
 ```
 
+## Cas particuliers déjà gérés
+
+La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
+
+| Situation | Ce que fait l'app |
+| --- | --- |
+| Deux personnes portent le même prénom | Le second est prévenu qu'un homonyme a déjà répondu et peut se déclarer distinct, il devient « Thomas (2) » |
+| Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents |
+| Personne n'a répondu | Message distinct de « personne n'est dispo », pour ne pas confondre silence et refus |
+| Trop peu de monde | On annonce combien il en manque plutôt qu'un lieu |
+| Ça ne tient qu'aux indécis | Le message le dit, la carte passe en orange |
+| Vraiment trop de monde | On prévient qu'il faudra faire tourner |
+| Match ou deadline déjà passés | Refusé à la création, la deadline est recalée si besoin |
+| Deux sondages le même jour | Contrainte en base, on renvoie vers celui qui existe |
+| Réponse après la deadline | Refusée, le sondage est en lecture seule |
+
 ## Notifications
 
 Deux canaux complémentaires, alimentés par le même **fil d'activité** (modèle `Activity`) :
@@ -144,6 +160,20 @@ La base est un fichier SQLite dans le volume `footix-data`. Sauvegarde :
 ```bash
 docker compose cp backend:/app/prisma/data/footix.db ./footix-backup.db
 ```
+
+### Mise en ligne avec Caddy
+
+Pour un vrai déploiement, `docker-compose.prod.yml` place **Caddy** en frontal : il obtient
+et renouvelle le certificat TLS tout seul, et route vers l'application et l'API. Aucun autre
+service n'est exposé, tout le reste reste sur le réseau interne.
+
+```bash
+cp .env.example .env   # renseigner FOOTIX_DOMAIN et POSTGRES_PASSWORD
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Le domaine doit pointer sur la machine et les ports 80 et 443 doivent être ouverts, sinon
+Let's Encrypt ne peut pas valider. La config se trouve dans `deploy/Caddyfile`.
 
 Passer à Kubernetes (k3s + DuckDNS, cf. `deploiement-docker-k8s-duckdns.md`) reste possible :
 les images sont les mêmes, il faut un Deployment par service, un Ingress, et un CronJob à la

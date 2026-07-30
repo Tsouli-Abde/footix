@@ -52,6 +52,30 @@ describe('recommendVenue', () => {
     expect(recommendVenue(counts(MIN_PLAYERS - 1, 0)).venueId).toBeNull();
     expect(recommendVenue(counts(MIN_PLAYERS, 0)).venueId).toBe('five');
   });
+
+  it('distingue personne n’a répondu de personne n’est dispo', () => {
+    const vierge = recommendVenue(counts(0, 0, 0));
+    expect(vierge.outlook).toBe('vide');
+    expect(vierge.reason).toContain('encore répondu');
+
+    const tousNon = recommendVenue(counts(0, 0, 5));
+    expect(tousNon.outlook).toBe('vide');
+    expect(tousNon.reason).toContain('dispo');
+  });
+
+  it('prévient quand on est vraiment trop nombreux', () => {
+    const foule = recommendVenue(counts(26, 0));
+    expect(foule.outlook).toBe('foule');
+    expect(foule.venueId).toBe('sceaux');
+  });
+
+  it('accorde correctement le pluriel, y compris sur indécis', () => {
+    // Cinq potentiels, il en manque exactement un : le singulier doit tenir.
+    expect(recommendVenue(counts(5, 0)).reason).toContain('1 joueur pour');
+    // « indécis » est invariable, il ne doit jamais prendre un second s.
+    expect(recommendVenue(counts(3, 3)).reason).toContain('3 indécis');
+    expect(recommendVenue(counts(3, 3)).reason).not.toContain('indéciss');
+  });
 });
 
 describe('normalizeName', () => {
