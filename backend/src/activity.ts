@@ -7,9 +7,10 @@ import { pushToAll } from './push.js';
  * Fil d'activité de l'équipe.
  *
  * Chaque moment notable y laisse une ligne, que le front affiche en notification
- * in-app (toast + cloche). Les moments forts (sondage ouvert, résultat) déclenchent
- * en plus une notification push OS ; le détail (réponses individuelles) reste
- * in-app pour ne pas spammer les téléphones.
+ * in-app (toast et cloche). Le push OS est réservé aux deux seuls moments qui
+ * demandent quelque chose aux gens : le sondage qui s'ouvre et le récapitulatif
+ * de la veille. Tout le reste (réponses, clôture, score) reste dans l'app, pour
+ * que recevoir une notification garde du sens.
  */
 
 export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
@@ -88,7 +89,13 @@ export const announceReminder = (event: EventLike, body: string) =>
     push: true,
   });
 
-/** Clôture avec lieu retenu : moment fort. */
+/**
+ * Clôture avec lieu retenu.
+ *
+ * Pas de push : le récapitulatif de la veille a déjà annoncé où on jouerait, et
+ * la clôture tombe souvent quelques heures après. Ça reste dans le fil, visible
+ * en ouvrant l'app.
+ */
 export const announceClose = (event: EventLike, venue: string | null) => {
   const label = venueLabel(venue);
   return recordActivity({
@@ -96,18 +103,18 @@ export const announceClose = (event: EventLike, venue: string | null) => {
     title: eventLabel(event),
     body: label ? `C'est décidé, on joue à ${label}.` : 'Vote clôturé, match annulé.',
     eventPublicToken: event.publicToken,
-    push: true,
+    push: false,
   });
 };
 
-/** Score saisi après le match : les gens veulent le savoir, on pousse aussi. */
+/** Score saisi après le match. In-app seulement, personne n'a besoin d'être alerté. */
 export const announceScore = (event: EventLike, score: string) =>
   recordActivity({
     type: 'score',
     title: eventLabel(event),
     body: `Score final : ${score}.`,
     eventPublicToken: event.publicToken,
-    push: true,
+    push: false,
   });
 
 export function serializeActivity(activity: {

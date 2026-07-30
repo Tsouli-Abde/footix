@@ -22,8 +22,6 @@ export function AnswerForm({ event, onAnswered }: Props) {
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** L'utilisateur a confirmé être une autre personne portant le même prénom. */
-  const [isHomonym, setIsHomonym] = useState(false);
 
   const nameKey = normalizeName(name);
   const existing = useMemo(
@@ -34,21 +32,16 @@ export function AnswerForm({ event, onAnswered }: Props) {
   // Dès qu'on reconnaît la personne, on présélectionne sa réponse actuelle :
   // changer d'avis devient un seul clic.
   useEffect(() => {
-    if (existing && !isHomonym) setAvailability(existing.availability);
-  }, [existing?.id, isHomonym]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Changer de prénom annule la déclaration d'homonymie, qui ne vaut que pour
-  // le prénom sur lequel elle a été faite.
-  useEffect(() => setIsHomonym(false), [nameKey]);
+    if (existing) setAvailability(existing.availability);
+  }, [existing?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async () => {
     if (!availability) return;
     setSending(true);
     setError(null);
     try {
-      const result = await api.answer(event.publicToken, name.trim(), availability, isHomonym);
+      const result = await api.answer(event.publicToken, name.trim(), availability);
       rememberName(name.trim());
-      setIsHomonym(false);
       onAnswered(result.event);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Envoi impossible, réessaie.');
@@ -57,16 +50,14 @@ export function AnswerForm({ event, onAnswered }: Props) {
     }
   };
 
-  const knownAnswer = existing && !isHomonym;
+  const knownAnswer = Boolean(existing);
 
   return (
     <Card>
       <h2 className="text-lg font-semibold">{knownAnswer ? 'Changer ta réponse' : 'Tu viens ?'}</h2>
-      <p className="mt-1 text-sm text-slate-500">
-        {knownAnswer
-          ? `Tu as répondu ${AVAILABILITY_LABELS[existing.availability]}. Tu peux changer jusqu’à la deadline.`
-          : 'Ton prénom, ta réponse, et c’est réglé.'}
-      </p>
+      {/* Quand le prénom est déjà pris, le bandeau plus bas dit tout, pas la
+          peine de répéter la réponse actuelle ici. */}
+      {!knownAnswer && <p className="mt-1 text-sm text-slate-500">Ton prénom, ta réponse, et c’est réglé.</p>}
 
       <div className="mt-4 space-y-4">
         <input
@@ -77,26 +68,18 @@ export function AnswerForm({ event, onAnswered }: Props) {
           className={`${inputClass} sm:max-w-xs`}
         />
 
-        {/* Deux personnes peuvent porter le même prénom. Plutôt que d'écraser en
-            silence la réponse de l'autre, on demande. */}
+        {/* Le prénom fait office d'identité, premier arrivé premier servi. On
+            prévient donc avant d'écraser la réponse de quelqu'un d'autre. */}
         {existing && (
-          <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm">
-            {isHomonym ? (
-              <p className="text-sky-900">
-                Compris, tu es un autre {name.trim()}. Ta réponse sera ajoutée à part.{' '}
-                <button type="button" onClick={() => setIsHomonym(false)} className="font-medium underline">
-                  Non, c’est bien moi
-                </button>
-              </p>
-            ) : (
-              <p className="text-sky-900">
-                Un {existing.name} a déjà répondu {AVAILABILITY_LABELS[existing.availability].toLowerCase()}. Si c’est
-                toi, continue.{' '}
-                <button type="button" onClick={() => setIsHomonym(true)} className="font-medium underline">
-                  Je suis quelqu’un d’autre
-                </button>
-              </p>
-            )}
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            <p>
+              <span className="font-medium">{existing.name}</span> a déjà répondu{' '}
+              {AVAILABILITY_LABELS[existing.availability].toLowerCase()}.
+            </p>
+            <p className="mt-1">
+              Si c’est toi, continue, ta réponse sera mise à jour. Sinon ajoute de quoi vous distinguer, par exemple{' '}
+              <span className="font-medium">{name.trim()} B</span>.
+            </p>
           </div>
         )}
 

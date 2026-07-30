@@ -11,7 +11,7 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:gap-3">
           <Link to="/" className="mr-auto flex items-center gap-2 text-lg font-bold text-slate-900">
             <img src="/favicon.svg" alt="" className="h-7 w-7" />
             Footix
@@ -19,9 +19,6 @@ export function Layout() {
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={navClass}>
               En cours
-            </NavLink>
-            <NavLink to="/historique" className={navClass}>
-              Historique
             </NavLink>
             <NavLink to="/nouveau" className={navClass}>
               Nouveau
@@ -31,7 +28,7 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <Outlet />
       </main>
 

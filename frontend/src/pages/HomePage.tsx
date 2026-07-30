@@ -3,21 +3,18 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { NotificationToggle } from '../components/NotificationToggle';
 import { Badge, Button, Card, PageState } from '../components/ui';
-import { eventTitle, formatCountdown, formatMatchDate, formatMatchSlot, WEEKDAYS } from '../lib/dates';
-import type { EventSummary, RecurrenceTemplate } from '../types';
+import { eventTitle, formatCountdown, formatMatchSlot } from '../lib/dates';
+import type { EventSummary } from '../types';
 
 export function HomePage() {
   const [events, setEvents] = useState<EventSummary[]>([]);
-  const [templates, setTemplates] = useState<RecurrenceTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api.listEvents('ouvert'), api.listTemplates()])
-      .then(([openEvents, activeTemplates]) => {
-        setEvents(openEvents);
-        setTemplates(activeTemplates);
-      })
+    api
+      .listEvents('ouvert')
+      .then(setEvents)
       .catch((err) => setError(err instanceof Error ? err.message : 'Chargement impossible'))
       .finally(() => setLoading(false));
   }, []);
@@ -25,14 +22,14 @@ export function HomePage() {
   if (loading || error) return <PageState loading={loading} error={error} />;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Sondages en cours</h1>
           <p className="mt-1 text-sm text-slate-500">Dis si tu viens, le lieu se décide tout seul après.</p>
         </div>
-        <Link to="/nouveau">
-          <Button>Lancer un sondage</Button>
+        <Link to="/nouveau" className="max-sm:w-full">
+          <Button className="max-sm:w-full">Lancer un sondage</Button>
         </Link>
       </div>
 
@@ -62,36 +59,14 @@ export function HomePage() {
                   )}
                   <p className="mt-3 text-xs text-slate-500">
                     {event.counts.oui} présent{event.counts.oui > 1 ? 's' : ''}
-                    {event.counts.si_besoin > 0 && `, ${event.counts.si_besoin} si besoin`} · réponses{' '}
-                    {formatCountdown(event.voteDeadline)}
+                    {event.counts.si_besoin > 0 && `, ${event.counts.si_besoin} si besoin`} ·{' '}
+                    {event.votingOpen ? `réponses ${formatCountdown(event.voteDeadline)}` : 'réponses closes'}
                   </p>
                 </Card>
               </Link>
             </li>
           ))}
         </ul>
-      )}
-
-      {templates.length > 0 && (
-        <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Rendez-vous hebdo</h2>
-          <ul className="space-y-2">
-            {templates.map((template) => (
-              <li key={template.id} className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
-                <span className="font-medium text-slate-800">{template.title}</span>
-                <span className="text-slate-500">
-                  {' '}
-                  chaque {WEEKDAYS[template.weekday]}, le sondage s’ouvre {template.leadTimeDays} jours avant.
-                </span>
-                {template.nextMatchDate && (
-                  <span className="mt-1 block text-xs text-slate-400">
-                    Prochain : {formatMatchDate(template.nextMatchDate)}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
     </div>
   );

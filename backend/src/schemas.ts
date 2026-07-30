@@ -52,12 +52,6 @@ export const resultSchema = z.object({
 export const answerSchema = z.object({
   name: z.string().trim().min(2, 'Il me faut au moins deux lettres').max(60),
   availability: z.enum(AVAILABILITY_VALUES),
-  /**
-   * Vrai quand la personne confirme être un homonyme et non celle qui a déjà
-   * répondu sous ce prénom. On crée alors une seconde entrée plutôt que
-   * d'écraser la réponse de l'autre.
-   */
-  distinct: z.boolean().optional(),
 });
 
 export const createTemplateSchema = z.object({

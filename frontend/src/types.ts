@@ -47,7 +47,6 @@ export type FootixEvent = {
   participants: Participant[];
   /** Présents uniquement sur la vue organisateur. */
   organizerToken?: string;
-  recurrenceTemplateId?: string | null;
   venues?: Venue[];
 };
 
@@ -79,17 +78,4 @@ export type Activity = {
   /** Lien vers le sondage concerné, ou null. */
   url: string | null;
   createdAt: string;
-};
-
-export type RecurrenceTemplate = {
-  id: string;
-  title: string;
-  description: string | null;
-  weekday: number;
-  deadlineHoursBefore: number;
-  leadTimeDays: number;
-  active: boolean;
-  createdAt: string;
-  nextMatchDate?: string;
-  organizerToken?: string;
 };

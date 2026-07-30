@@ -78,7 +78,6 @@ export function serializeEventForOrganizer(event: EventWithParticipants) {
   return {
     ...serializeEvent(event),
     organizerToken: event.organizerToken,
-    recurrenceTemplateId: event.recurrenceTemplateId,
     /** Les lieux proposés à la clôture, y compris celui réservé à l'organisateur. */
     venues: Object.values(VENUES).map((venue) => ({
       id: venue.id,

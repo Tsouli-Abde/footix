@@ -41,6 +41,39 @@ export function reminderMessage(event: EventWithParticipants): string {
   }
 }
 
+/** Combien d'heures avant le coup d'envoi on clôture à la place de l'organisateur. */
+export const AUTO_CLOSE_HOURS_BEFORE = 3;
+
+/**
+ * Clôture les sondages que personne n'a clôturés à l'approche du match.
+ *
+ * Le lieu retenu est celui que l'app conseillait, ou rien si les réponses ne
+ * permettaient pas de trancher. Volontairement silencieux : c'est un ménage
+ * automatique, pas une décision, ça ne mérite pas de réveiller les téléphones.
+ */
+export async function autoCloseDueEvents(now = new Date()) {
+  const events = await prisma.event.findMany({
+    where: {
+      status: 'ouvert',
+      matchDate: { lte: new Date(now.getTime() + AUTO_CLOSE_HOURS_BEFORE * HOUR_MS) },
+    },
+    include: eventInclude,
+  });
+
+  const closed: { eventId: string; chosenVenue: string | null }[] = [];
+
+  for (const event of events) {
+    const { venueId } = recommendVenue(countAnswers(event));
+    await prisma.event.update({
+      where: { id: event.id },
+      data: { status: 'cloture', chosenVenue: venueId },
+    });
+    closed.push({ eventId: event.id, chosenVenue: venueId });
+  }
+
+  return closed;
+}
+
 export type ReminderResult = {
   sent: { eventId: string; publicToken: string; message: string }[];
   skipped: { eventId: string; reason: string }[];

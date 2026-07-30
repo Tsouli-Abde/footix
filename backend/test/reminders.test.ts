@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/db.js';
-import { sendDueReminders } from '../src/reminders.js';
+import { autoCloseDueEvents, sendDueReminders } from '../src/reminders.js';
 import { inDays, resetDb } from './helpers.js';
 
 const request = supertest(createApp());
@@ -47,6 +47,12 @@ describe('récapitulatif de la veille', () => {
     await sendDueReminders();
     const second = await sendDueReminders();
     expect(second.sent).toHaveLength(0);
+  });
+
+  it('ne touche pas aux sondages encore loin du coup d’envoi', async () => {
+    await eventTomorrow();
+    const closed = await autoCloseDueEvents();
+    expect(closed).toHaveLength(0);
   });
 
   it('laisse une trace dans le fil d’activité', async () => {

@@ -1,32 +1,21 @@
 /**
- * Jeu de données minimal : le rendez-vous du vendredi et le sondage de la semaine.
+ * Jeu de données minimal : un sondage pour le prochain vendredi.
  *
- * `npm run seed`, sans effet si le modèle existe déjà.
+ * `npm run seed`, sans effet si un sondage existe déjà ce jour-là.
  */
+import '../env.js'; // doit rester en premier : charge .env avant tout le reste
 import { prisma } from '../db.js';
-import { generateToken, occurrenceKeyFor } from '../domain.js';
-import { nextMatchDate } from '../recurrence.js';
+import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor } from '../domain.js';
 
-const TITLE = 'Foot hebdo du vendredi';
+/** Le prochain vendredi à midi. */
+function nextFriday(from = new Date()): Date {
+  const date = atMatchHour(from);
+  date.setDate(date.getDate() + ((5 - date.getDay() + 7) % 7));
+  if (date.getTime() <= from.getTime()) date.setDate(date.getDate() + 7);
+  return date;
+}
 
-const template =
-  (await prisma.recurrenceTemplate.findFirst({ where: { title: TITLE } })) ??
-  (await prisma.recurrenceTemplate.create({
-    data: {
-      title: TITLE,
-      description: 'Le match de la semaine, sur la pause déj.',
-      weekday: 5,
-      deadlineHoursBefore: 18, // jeudi 18h pour un match vendredi midi
-      leadTimeDays: 3, // le sondage s'ouvre le mardi
-      organizerToken: generateToken(),
-    },
-  }));
-
-console.log(`Rendez-vous, lien de gestion : /recurrence/${template.organizerToken}`);
-
-// On crée directement l'occurrence à venir, sans passer par la porte du délai :
-// on veut un sondage sous les yeux quelle que soit la date d'exécution du seed.
-const matchDate = nextMatchDate(template);
+const matchDate = nextFriday();
 const occurrenceKey = occurrenceKeyFor(matchDate);
 
 const event =
@@ -34,17 +23,17 @@ const event =
   (await prisma.event.create({
     data: {
       title: null, // sans titre, c'est la date qui sert d'intitulé
-      type: 'recurrent',
-      recurrenceTemplateId: template.id,
+      description: 'Le match de la semaine, sur la pause déj.',
+      organizerName: 'Tsouli',
       matchDate,
       occurrenceKey,
-      voteDeadline: new Date(matchDate.getTime() - template.deadlineHoursBefore * 60 * 60 * 1000),
+      voteDeadline: defaultDeadlineFor(matchDate),
       publicToken: generateToken(),
       organizerToken: generateToken(),
     },
   }));
 
-console.log(`Sondage de la semaine, lien de réponse   : /e/${event.publicToken}`);
-console.log(`Sondage de la semaine, lien organisateur : /manage/${event.organizerToken}`);
+console.log(`Sondage, lien de réponse   : /e/${event.publicToken}`);
+console.log(`Sondage, lien organisateur : /manage/${event.organizerToken}`);
 
 await prisma.$disconnect();

@@ -71,15 +71,14 @@ describe('homonymes', () => {
     expect(res.body.event.counts.non).toBe(1);
   });
 
-  it('crée une entrée distincte quand la personne confirme être un autre Thomas', async () => {
+  it('laisse coexister deux personnes qui se distinguent elles-mêmes', async () => {
     const event = await openEvent();
     await request.post(`/api/events/${event.publicToken}/answers`).send({ name: 'Thomas', availability: 'oui' });
     const res = await request
       .post(`/api/events/${event.publicToken}/answers`)
-      .send({ name: 'Thomas', availability: 'non', distinct: true });
+      .send({ name: 'Thomas B', availability: 'non' });
 
     expect(res.body.event.participants).toHaveLength(2);
-    expect(res.body.event.participants.map((p: { name: string }) => p.name)).toContain('Thomas (2)');
     expect(res.body.event.counts.oui).toBe(1);
     expect(res.body.event.counts.non).toBe(1);
   });

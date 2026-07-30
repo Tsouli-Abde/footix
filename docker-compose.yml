@@ -40,8 +40,8 @@ services:
       - backend
     restart: unless-stopped
 
-  # Génération des événements hebdomadaires. Le job est idempotent : le
-  # relancer ne crée jamais de doublon, une passe par jour suffit largement.
+  # Battement horaire : récapitulatif de la veille et clôture automatique des
+  # sondages oubliés. Idempotent, le relancer ne double rien.
   cron:
     build: ./backend
     environment:
@@ -52,11 +52,7 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}
     command: >
-      sh -c 'while true; do
-        node dist/jobs/generate-recurring.js;
-        node dist/jobs/send-reminders.js;
-        sleep 3600;
-      done'
+      sh -c 'while true; do node dist/jobs/tick.js; sleep 3600; done'
     depends_on:
       db:
         condition: service_healthy

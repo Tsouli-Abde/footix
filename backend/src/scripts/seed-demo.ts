@@ -42,7 +42,7 @@ function availabilityAt(index: number, present: number, maybe: number): Availabi
 
 type PastMatch = (typeof PAST_MATCHES)[number];
 
-async function createPastMatch({ date, present, maybe, venue, score, note }: PastMatch, templateId: string | null) {
+async function createPastMatch({ date, present, maybe, venue, score, note }: PastMatch) {
   const matchDate = atMatchHour(date);
   const occurrenceKey = occurrenceKeyFor(matchDate);
 
@@ -54,8 +54,6 @@ async function createPastMatch({ date, present, maybe, venue, score, note }: Pas
   await prisma.event.create({
     data: {
       title: null, // sans titre, c'est la date qui sert d'intitulé
-      type: 'recurrent',
-      recurrenceTemplateId: templateId,
       matchDate,
       occurrenceKey,
       voteDeadline: defaultDeadlineFor(matchDate),
@@ -78,11 +76,9 @@ async function createPastMatch({ date, present, maybe, venue, score, note }: Pas
   console.log(`  ${occurrenceKey} : ${present} présents, ${venue}${score ? `, score ${score}` : ''}.`);
 }
 
-const template = await prisma.recurrenceTemplate.findFirst({ where: { active: true } });
-
 console.log('Matchs déjà joués :');
 for (const match of PAST_MATCHES) {
-  await createPastMatch(match, template?.id ?? null);
+  await createPastMatch(match);
 }
 
 // Remplit le sondage en cours avec le reste de l'équipe.
@@ -113,11 +109,6 @@ if (openEvent) {
   console.log(`\nSondage en cours : ${added} réponse(s) ajoutée(s).`);
   console.log(`  Lien de réponse    : /e/${openEvent.publicToken}`);
   console.log(`  Lien organisateur  : /manage/${openEvent.organizerToken}`);
-}
-
-if (template) {
-  console.log(`  Rendez-vous hebdo  : /recurrence/${template.organizerToken}`);
-  console.log(`  Lien permanent     : /hebdo/${template.id}`);
 }
 
 await prisma.$disconnect();

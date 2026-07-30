@@ -25,7 +25,8 @@ qu'on pourrait basculer au parc s'ils se confirment. L'app conseille, l'organisa
 au moment de clôturer, et il peut choisir autre chose (le match contre une autre boîte est
 proposé uniquement de son côté, jamais aux votants).
 
-L'heure ne se saisit pas : on joue toujours sur la pause déj.
+L'heure est facultative : par défaut on joue sur la pause déj et l'app ne l'affiche pas.
+L'organisateur peut en fixer une quand on sort du créneau habituel.
 
 ## Les liens
 
@@ -48,14 +49,11 @@ Autres partis pris, hérités de l'usage réel :
   indifférents) recharge sa réponse au lieu d'en créer une deuxième.
 
 Une fois le match joué, l'organisateur peut noter le **score**, visible ensuite par tout le
-monde et dans l'historique.
+monde.
 
-Les matchs hebdomadaires s'appuient sur un **rendez-vous récurrent** : un job quotidien crée
-le sondage de la semaine quelques jours avant. Ce rendez-vous a un **lien permanent**
-(`/hebdo/<id>`) qu'on épingle une fois pour toutes sur Teams : il renvoie toujours vers le
-sondage de la semaine en cours, sans avoir à repartager une URL chaque semaine. La page de
-gestion du rendez-vous (`/recurrence/<token>`) liste tous les sondages produits avec leur
-lien de gestion, pour pouvoir les clôturer et noter les scores.
+Si personne ne clôture, l'app le fait toute seule **trois heures avant le coup d'envoi**, en
+retenant le lieu qu'elle conseillait. C'est volontairement silencieux : c'est du ménage, pas
+une décision, ça ne mérite pas de notification.
 
 ## Développement local
 
@@ -71,8 +69,8 @@ cd frontend && npm install && npm run dev
 
 Le front tourne sur http://localhost:5173 et proxifie `/api` vers le backend (port 3001).
 
-Pour avoir des données sous les yeux (rendez-vous du vendredi, sondage de la semaine, puis
-une équipe et des matchs passés), avec les liens affichés en sortie :
+Pour avoir des données sous les yeux (un sondage pour le prochain vendredi, puis une équipe
+et des matchs passés), avec les liens affichés en sortie :
 
 ```bash
 cd backend && npm run seed && npm run seed:demo
@@ -84,7 +82,7 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 
 | Situation | Ce que fait l'app |
 | --- | --- |
-| Deux personnes portent le même prénom | Le second est prévenu qu'un homonyme a déjà répondu et peut se déclarer distinct, il devient « Thomas (2) » |
+| Deux personnes portent le même prénom | Premier arrivé premier servi : le second est prévenu et invité à se distinguer, par exemple « Thomas B » |
 | Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents |
 | Personne n'a répondu | Message distinct de « personne n'est dispo », pour ne pas confondre silence et refus |
 | Trop peu de monde | On annonce combien il en manque plutôt qu'un lieu |
@@ -93,18 +91,22 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 | Match ou deadline déjà passés | Refusé à la création, la deadline est recalée si besoin |
 | Deux sondages le même jour | Contrainte en base, on renvoie vers celui qui existe |
 | Réponse après la deadline | Refusée, le sondage est en lecture seule |
+| Sondage jamais clôturé | Clôturé tout seul trois heures avant le match, sans notification |
 
 ## Notifications
 
 Deux canaux complémentaires, alimentés par le même **fil d'activité** (modèle `Activity`) :
-chaque moment notable (sondage ouvert, réponse, clôture avec lieu, score) y laisse une ligne.
+chaque moment notable (sondage ouvert, réponse, rappel de la veille, clôture, score) y laisse
+une ligne.
 
 - **In-app** : une cloche dans l'en-tête (compteur de non-lus + panneau déroulant) et des
   **toasts** qui surgissent quand quelque chose se passe pendant qu'on utilise l'app. Le front
   interroge `/api/activity` par polling ; le toast n'apparaît que si l'onglet est visible, la
   cloche se met à jour en continu. On ne se notifie jamais de sa propre réponse.
-- **Push OS** (ci-dessous) : pour l'écran verrouillé / l'app fermée, réservé aux moments forts
-  (sondage ouvert, clôture, score) pour ne pas faire sonner les téléphones à chaque réponse.
+- **Push OS** (ci-dessous) : pour l'écran verrouillé ou l'app fermée. Volontairement limité
+  aux deux seuls moments qui demandent quelque chose aux gens, soit **deux notifications par
+  match au maximum** : à l'ouverture du sondage, et le récapitulatif de la veille. Les
+  réponses, la clôture et le score restent dans l'app, pour qu'une notification garde du sens.
 
 ## Notifications push
 
@@ -114,8 +116,7 @@ sondage s'ouvre, même téléphone verrouillé et app fermée. C'est opt-in : un
 le navigateur.
 
 Ça repose sur la Web Push API (VAPID) : le service worker (`frontend/src/sw.ts`) affiche la
-notification, le backend (`backend/src/push.ts`) l'envoie à tous les abonnés à la création
-d'un sondage — y compris ceux générés automatiquement par le cron.
+notification, le backend (`backend/src/push.ts`) l'envoie à tous les abonnés.
 
 Pour l'activer, il faut une paire de clés VAPID côté backend :
 
@@ -131,9 +132,9 @@ dev), et sur **iOS** il ne marche que si l'app est **installée sur l'écran d'a
 
 ## Tests
 
-Le backend est couvert par Vitest : l'algo de recommandation et les règles
-transverses en unitaire, les routes en intégration sur une base SQLite jetable
-(migrée à part, la base de dev n'est jamais touchée).
+Le backend est couvert par Vitest : l'algo de recommandation et les règles transverses en
+unitaire, les routes en intégration sur une base PostgreSQL dédiée (`footix_test`), pour que
+la base de dev ne soit jamais touchée.
 
 ```bash
 cd backend && npm test
@@ -145,20 +146,19 @@ cd backend && npm test
 docker compose up -d --build
 ```
 
-L'app est servie sur http://localhost:8090 (8080 étant souvent déjà pris en local).
+L'app est servie sur http://localhost:8090 (8080 étant souvent déjà pris en local). Nginx sert
+le front et proxifie `/api` vers le backend, donc tout est sur la même origine et il n'y a pas
+de CORS à configurer. Les routes type `/e/<token>` fonctionnent en accès direct grâce au
+repli SPA de nginx.
 
-L'app est servie sur http://localhost:8090. Nginx sert le front et proxifie `/api` vers le
-backend, donc tout est sur la même origine et il n'y a pas de CORS à configurer. Les routes
-type `/e/<token>` fonctionnent en accès direct grâce au fallback SPA de nginx.
+Quatre services : `db` (PostgreSQL), `backend` (Express + Prisma), `frontend` (nginx) et
+`cron`, qui lance toutes les heures le récapitulatif de la veille et la clôture automatique.
+Le job est idempotent, le relancer ne double rien.
 
-Trois services : `frontend` (nginx), `backend` (Express + SQLite) et `cron`, qui lance une
-fois par jour la génération des sondages récurrents. Le job est idempotent, le relancer ne
-crée pas de doublon.
-
-La base est un fichier SQLite dans le volume `footix-data`. Sauvegarde :
+Les données vivent dans le volume `footix-data`. Sauvegarde :
 
 ```bash
-docker compose cp backend:/app/prisma/data/footix.db ./footix-backup.db
+docker compose exec db pg_dump -U footix footix > footix-backup.sql
 ```
 
 ### Mise en ligne avec Caddy
@@ -182,15 +182,15 @@ place du service `cron`.
 ## Structure
 
 ```
-backend/    API Express + Prisma (SQLite)
+backend/    API Express + Prisma (PostgreSQL)
   prisma/   schéma et migrations
   src/
-    routes/     events (public), answers, manage (organisateur), templates (récurrence)
-    jobs/       génération des sondages récurrents
+    routes/     events (public), answers, manage (organisateur), activity, push
+    jobs/       tick horaire : rappel de la veille et clôture automatique
     domain.ts   lieux, seuils, algo de recommandation, tokens, anti-doublon
 frontend/   React + Vite + Tailwind, PWA installable
   src/
-    pages/      accueil, création, réponse, gestion, historique, récurrence
+    pages/      accueil, création, réponse, gestion
     components/ formulaire de réponse, liste des présents, carte du lieu
 ```
 
@@ -214,15 +214,6 @@ Organisateur (`:organizerToken`) :
 | `PATCH` | `/api/manage/:organizerToken/result` | noter le score après le match |
 | `POST` | `/api/manage/:organizerToken/reopen` | rouvrir (efface lieu et score) |
 
-Récurrence :
-
-| Méthode | Route | Rôle |
-| --- | --- | --- |
-| `GET` `POST` | `/api/templates` | lister, créer un rendez-vous hebdo |
-| `GET` | `/api/templates/:templateId/current` | le sondage courant (cible du lien permanent) |
-| `GET` `PATCH` | `/api/templates/manage/:organizerToken` | consulter, modifier |
-| `GET` | `/api/templates/manage/:organizerToken/events` | les sondages produits, avec leur lien de gestion |
-| `POST` | `/api/templates/generate` | forcer la génération (ce que fait le cron) |
 
 ## Pistes pour la suite
 

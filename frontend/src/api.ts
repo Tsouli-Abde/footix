@@ -1,4 +1,4 @@
-import type { Activity, Availability, EventSummary, FootixEvent, RecurrenceTemplate } from './types';
+import type { Activity, Availability, EventSummary, FootixEvent } from './types';
 
 /** En dev, Vite proxifie /api vers le backend. En prod, nginx fait la même chose. */
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
@@ -50,11 +50,10 @@ export const api = {
 
   getEvent: (publicToken: string) => request<{ event: FootixEvent }>(`/events/${publicToken}`).then((r) => r.event),
 
-  /** `distinct` vaut vrai quand la personne a confirmé être un homonyme. */
-  answer: (publicToken: string, name: string, availability: Availability, distinct = false) =>
+  answer: (publicToken: string, name: string, availability: Availability) =>
     request<{ participantId: string; event: FootixEvent }>(`/events/${publicToken}/answers`, {
       method: 'POST',
-      body: JSON.stringify({ name, availability, distinct }),
+      body: JSON.stringify({ name, availability }),
     }),
 
   removeParticipant: (publicToken: string, participantId: string) =>
@@ -87,25 +86,6 @@ export const api = {
     request<{ event: FootixEvent }>(`/manage/${organizerToken}/reopen`, { method: 'POST' }).then((r) => r.event),
 
   deleteEvent: (organizerToken: string) => request<void>(`/manage/${organizerToken}`, { method: 'DELETE' }),
-
-  listTemplates: () => request<{ templates: RecurrenceTemplate[] }>('/templates').then((r) => r.templates),
-
-  getTemplate: (organizerToken: string) =>
-    request<{ template: RecurrenceTemplate }>(`/templates/manage/${organizerToken}`).then((r) => r.template),
-
-  /** Le sondage du moment pour un rendez-vous, ce vers quoi pointe le lien permanent. */
-  getCurrentTemplateEvent: (templateId: string) =>
-    request<{ event: FootixEvent | null }>(`/templates/${templateId}/current`).then((r) => r.event),
-
-  /** Sondages produits par un rendez-vous hebdo, avec leur lien de gestion. */
-  getTemplateEvents: (organizerToken: string) =>
-    request<{ events: EventSummary[] }>(`/templates/manage/${organizerToken}/events`).then((r) => r.events),
-
-  updateTemplate: (organizerToken: string, input: Record<string, unknown>) =>
-    request<{ template: RecurrenceTemplate }>(`/templates/manage/${organizerToken}`, {
-      method: 'PATCH',
-      body: JSON.stringify(input),
-    }).then((r) => r.template),
 
   listActivity: (since?: string) =>
     request<{ activities: Activity[] }>(`/activity${since ? `?since=${encodeURIComponent(since)}` : ''}`).then(
