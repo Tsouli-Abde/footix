@@ -2,7 +2,10 @@ import './env.js'; // doit rester en premier : charge .env avant tout le reste
 import { createApp } from './app.js';
 import { prisma } from './db.js';
 
-const port = Number(process.env.PORT ?? 3001);
+// Défaut volontairement atypique : c'est le port qu'on ouvre sur sa propre
+// machine, il ne doit marcher sur les pieds d'aucun autre projet. En conteneur
+// la valeur vient de PORT, où 3001 suffit puisque rien n'est publié.
+const port = Number(process.env.PORT ?? 29301);
 
 const server = createApp().listen(port, () => {
   console.log(`Footix API à l'écoute sur http://localhost:${port}`);

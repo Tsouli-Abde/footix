@@ -12,7 +12,7 @@ import { defineConfig } from 'vitest/config';
  * Elle est créée au premier démarrage du conteneur (deploy/dev-init-db.sql).
  */
 const TEST_ENV = {
-  DATABASE_URL: 'postgresql://footix:footix@localhost:5433/footix_test?schema=public',
+  DATABASE_URL: 'postgresql://footix:footix@localhost:29433/footix_test?schema=public',
   // Paire VAPID jetable : les tests de push ont besoin de clés valides, mais
   // rien n'est envoyé, le transport est bouchonné.
   VAPID_PUBLIC_KEY: 'BNCNZYAGKLiKh9ljwbi4E4ou3_7aMK1W3NfS4nlVeZgFQ3HJaZdpbmRbtsvTzn6n_DO4P8lX642jUBeOnIHShAI',

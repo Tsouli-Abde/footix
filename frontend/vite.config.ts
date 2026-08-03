@@ -40,8 +40,13 @@ export default defineConfig({
     }),
   ],
   server: {
+    // Ports atypiques et figés : ils s'ouvrent sur la machine du développeur, où
+    // d'autres projets tournent en parallèle. strictPort fait échouer le
+    // démarrage plutôt que de glisser en douce sur un port voisin déjà pris.
+    port: 29173,
+    strictPort: true,
     proxy: {
-      '/api': { target: 'http://localhost:3001', changeOrigin: true },
+      '/api': { target: 'http://localhost:29301', changeOrigin: true },
     },
   },
 });

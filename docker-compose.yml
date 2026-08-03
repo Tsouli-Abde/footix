@@ -13,8 +13,9 @@ services:
       TZ: Europe/Paris
     ports:
       # Publié pour que `npm run dev` et les tests, lancés sur la machine,
-      # puissent y accéder. 5433 laisse le 5432 libre à un PostgreSQL local.
-      - '5433:5432'
+      # puissent y accéder. Port atypique choisi exprès : le 5432 habituel reste
+      # libre pour un PostgreSQL déjà installé, et rien ne vient en conflit.
+      - '29433:5432'
     volumes:
       - footix-data:/var/lib/postgresql/data
       # Crée la base de test au premier démarrage du volume (voir npm test).
@@ -45,8 +46,9 @@ services:
   frontend:
     build: ./frontend
     ports:
-      # 8080 est souvent pris par un autre service local, on expose sur 8090.
-      - '8090:80'
+      # Seul port de l'app publié sur la machine. Volontairement loin des 8080,
+      # 8090 et autres, souvent déjà pris par un autre projet.
+      - '29090:80'
     depends_on:
       - backend
     restart: unless-stopped
