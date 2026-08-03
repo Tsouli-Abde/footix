@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '../api';
-import { rememberedName } from '../lib/names';
-import { normalizeName } from '../lib/names';
+import { normalizeName, rememberedName } from '../lib/names';
 import type { Activity } from '../types';
 
 const POLL_INTERVAL_MS = 6_000;

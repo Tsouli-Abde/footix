@@ -11,10 +11,9 @@ export const answersRouter = Router();
 /**
  * Envoi ou mise à jour d'une réponse.
  *
- * Pas de compte : le prénom identifie la personne, premier arrivé premier servi.
- * Ressaisir le même prénom écrase donc la réponse précédente. Deux personnes qui
- * portent le même prénom doivent se distinguer elles-mêmes, en ajoutant une
- * initiale par exemple, et l'interface les y invite avant l'envoi.
+ * Pas de compte : le prénom identifie la personne, ressaisir le même prénom
+ * remplace donc la réponse précédente. Deux vrais homonymes se distinguent en
+ * ajoutant une initiale ; sinon l'organisateur peut retirer une réponse.
  */
 answersRouter.post(
   '/events/:publicToken/answers',
@@ -26,7 +25,7 @@ answersRouter.post(
     if (!isVotingOpen(event)) throw conflict('Les réponses sont closes pour ce match');
 
     const nameKey = normalizeName(input.name);
-    if (!nameKey) throw badRequest('Il me faut un prénom lisible');
+    if (!nameKey) throw badRequest('Prénom invalide');
 
     const participant = await prisma.participant.upsert({
       where: { eventId_nameKey: { eventId: event.id, nameKey } },
@@ -41,7 +40,7 @@ answersRouter.post(
   }),
 );
 
-/** Retirer quelqu'un, en cas de faute de frappe ou de doublon de prénom. */
+/** Retirer quelqu'un, en cas de faute de frappe ou d'homonyme. */
 answersRouter.delete(
   '/events/:publicToken/answers/:participantId',
   route(async (req, res) => {
