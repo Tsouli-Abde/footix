@@ -16,29 +16,14 @@ function countAnswers(event: EventWithParticipants): Counts {
   return counts;
 }
 
-/**
- * Le texte du récapitulatif de la veille.
- *
- * On ne se contente pas de répéter les chiffres : on annonce ce qui va se passer,
- * parce que c'est la question que tout le monde se pose la veille au soir.
- */
+/** Le texte du récapitulatif de la veille : où on en est, et où on joue. */
 export function reminderMessage(event: EventWithParticipants): string {
   const counts = countAnswers(event);
   const { venueId, outlook, reason } = recommendVenue(counts);
   const venue = venueId && isVenueId(venueId) ? VENUES[venueId].label : null;
 
-  switch (outlook) {
-    case 'vide':
-      return 'Personne n’a répondu pour l’instant. Si tu viens, dis-le maintenant.';
-    case 'insuffisant':
-      return `${reason} Sans quelques réponses de plus, ça ne se fera pas.`;
-    case 'incertain':
-      return `${counts.oui} sûrs et ${counts.si_besoin} indécis. Si vous confirmez, on part sur ${venue}.`;
-    case 'foule':
-      return `${counts.oui} joueurs pour ${venue}. Prévoyez de faire tourner.`;
-    default:
-      return `${counts.oui} joueurs, on part sur ${venue}.`;
-  }
+  if (outlook === 'vide' || outlook === 'insuffisant' || !venue) return reason;
+  return `${reason} On part sur ${venue}.`;
 }
 
 /** Combien d'heures avant le coup d'envoi on clôture à la place de l'organisateur. */

@@ -82,12 +82,12 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 
 | Situation | Ce que fait l'app |
 | --- | --- |
-| Deux personnes portent le même prénom | Premier arrivé premier servi : le second est prévenu et invité à se distinguer, par exemple « Thomas B » |
-| Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents |
+| Deux personnes portent le même prénom | Premier arrivé premier servi : le second remplace la réponse du premier, à lui d'ajouter une initiale (« Thomas B »). L'organisateur peut retirer une réponse |
+| Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents. Sur l'appareil qui a répondu, le formulaire préremplit la réponse envoyée |
 | Personne n'a répondu | Message distinct de « personne n'est dispo », pour ne pas confondre silence et refus |
-| Trop peu de monde | On annonce combien il en manque plutôt qu'un lieu |
-| Ça ne tient qu'aux indécis | Le message le dit, la carte passe en orange |
-| Vraiment trop de monde | On prévient qu'il faudra faire tourner |
+| Trop peu de monde | On annonce le nombre de joueurs et le minimum, plutôt qu'un lieu |
+| Ça ne tient qu'aux indécis | Les « si besoin » sont comptés à part, la carte passe en orange |
+| Vraiment trop de monde | La carte reste verte, l'organisateur voit le total |
 | Match ou deadline déjà passés | Refusé à la création, la deadline est recalée si besoin |
 | Deux sondages le même jour | Contrainte en base, on renvoie vers celui qui existe |
 | Réponse après la deadline | Refusée, le sondage est en lecture seule |

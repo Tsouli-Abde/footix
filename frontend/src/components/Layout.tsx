@@ -32,10 +32,6 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="mx-auto max-w-5xl px-4 pb-10 text-center text-xs text-slate-400">
-        Pas de compte, juste un lien à partager.
-      </footer>
-
       <ToastHost />
     </div>
   );

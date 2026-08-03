@@ -4,11 +4,8 @@ import type { FootixEvent } from '../types';
 const POLL_INTERVAL_MS = 7_000;
 
 /**
- * Charge un événement puis le rafraîchit périodiquement, pour que le tableau
- * reflète les votes des collègues sans avoir à recharger la page.
- *
- * Un simple polling suffit : quelques dizaines de personnes, un vote par semaine.
- * Des websockets seraient plus de complexité opérationnelle que de valeur.
+ * Charge un événement puis le rafraîchit périodiquement, pour voir arriver les
+ * réponses des collègues sans recharger la page.
  */
 export function usePolledEvent(load: () => Promise<FootixEvent>) {
   const [event, setEvent] = useState<FootixEvent | null>(null);

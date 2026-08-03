@@ -20,10 +20,7 @@ const TEXT: Record<Outlook, { label: string; title: string; body: string }> = {
 
 /**
  * Le lieu conseillé tant que le sondage est ouvert, puis le lieu retenu une fois
- * clôturé. C'est la réponse à la seule question qui compte : on joue où.
- *
- * Le ton se durcit à mesure que l'échéance approche. La veille, on arrête de
- * dire « pour l'instant » : c'est le moment où les gens s'organisent.
+ * clôturé. La veille du match, on arrête de dire « pour l'instant ».
  */
 export function VenueCard({ event }: { event: FootixEvent }) {
   const settled = event.status === 'cloture';
@@ -66,7 +63,6 @@ export function VenueCard({ event }: { event: FootixEvent }) {
       <p className={`text-sm font-medium ${text.label}`}>{imminent ? 'Demain, on part sur' : 'Pour l’instant, ça part sur'}</p>
       <p className={`text-xl font-bold sm:text-2xl ${text.title}`}>{venue.label}</p>
       <p className={`mt-1 text-sm ${text.body}`}>{reason}</p>
-      {!imminent && <p className={`mt-2 text-xs opacity-70 ${text.body}`}>Ça peut encore bouger, rien n’est réservé.</p>}
     </div>
   );
 }

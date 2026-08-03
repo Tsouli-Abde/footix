@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui';
 
-/**
- * Affiche une URL complète avec un bouton "Copier". Tout le partage sur Teams
- * passe par là, autant le rendre évident.
- */
+/** Une URL complète avec un bouton « Copier ». */
 export function CopyLink({ path, label, hint }: { path: string; label: string; hint?: string }) {
   const [copied, setCopied] = useState(false);
   const url = `${window.location.origin}${path}`;

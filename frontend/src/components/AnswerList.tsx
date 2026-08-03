@@ -13,17 +13,12 @@ type Props = {
   onRemove?: (participantId: string) => void;
 };
 
-/**
- * Qui vient, en trois colonnes.
- *
- * Une liste de noms se lit mieux qu'un tableau maintenant qu'il n'y a plus
- * qu'une question par personne, et ça passe tout seul sur mobile.
- */
+/** Qui vient, en trois colonnes. */
 export function AnswerList({ event, onRemove }: Props) {
   if (event.participants.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500">
-        Personne n’a encore répondu. Lance-toi.
+        Personne n’a encore répondu.
       </p>
     );
   }

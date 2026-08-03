@@ -26,7 +26,6 @@ export function HomePage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Sondages en cours</h1>
-          <p className="mt-1 text-sm text-slate-500">Dis si tu viens, le lieu se décide tout seul après.</p>
         </div>
         <Link to="/nouveau" className="max-sm:w-full">
           <Button className="max-sm:w-full">Lancer un sondage</Button>
@@ -39,7 +38,7 @@ export function HomePage() {
         <Card className="text-center">
           <p className="text-slate-600">Rien d’ouvert pour le moment.</p>
           <Link to="/nouveau" className="mt-3 inline-block text-sm font-medium text-green-700 hover:underline">
-            Lancer le prochain match
+            Lancer un sondage
           </Link>
         </Card>
       ) : (

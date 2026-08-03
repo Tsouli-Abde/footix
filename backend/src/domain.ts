@@ -22,19 +22,19 @@ export const VENUES = {
   five: {
     id: 'five',
     label: 'Le Five',
-    note: 'Terrain synthétique, format 5 ou 6 contre 6.',
+    note: 'Terrain synthétique, 5 ou 6 contre 6.',
     organizerOnly: false,
   },
   sceaux: {
     id: 'sceaux',
     label: 'Parc de Sceaux',
-    note: 'Grand terrain en herbe, quand on est assez nombreux.',
+    note: 'Grand terrain en herbe.',
     organizerOnly: false,
   },
   externe: {
     id: 'externe',
     label: 'Match contre une autre boîte',
-    note: 'Cas rare, ça se cale à la main.',
+    note: 'À caler à la main.',
     organizerOnly: true,
   },
 } as const;
@@ -73,15 +73,21 @@ export type Recommendation = {
   reason: string;
 };
 
-/** « 1 joueur », « 3 joueurs », et laisse tranquille les mots déjà en s (indécis). */
-const plural = (n: number, word: string) => `${n} ${word}${n > 1 && !word.endsWith('s') ? 's' : ''}`;
+/** « 1 joueur », « 3 joueurs ». */
+const players = (n: number) => `${n} joueur${n > 1 ? 's' : ''}`;
+
+/** « 8 joueurs sûrs », et les « si besoin » en plus quand il y en a. */
+const tally = (sure: number, maybe: number) => {
+  const base = `${players(sure)} sûr${sure > 1 ? 's' : ''}`;
+  return maybe > 0 ? `${base}, ${maybe} si besoin.` : `${base}.`;
+};
 
 /**
  * Choix du lieu à partir du nombre de réponses.
  *
  * Volontairement bête et lisible : deux seuils, pas de pondération obscure.
  * Les "si besoin" ne comptent jamais comme des présents, ils servent seulement
- * à signaler qu'on pourrait basculer au parc s'ils se confirment.
+ * à atteindre le minimum de joueurs.
  */
 export function recommendVenue(counts: Counts): Recommendation {
   const sure = counts.oui;
@@ -92,59 +98,31 @@ export function recommendVenue(counts: Counts): Recommendation {
     return {
       venueId: null,
       outlook: 'vide',
-      reason:
-        counts.non > 0
-          ? 'Personne de dispo pour l’instant.'
-          : 'Personne n’a encore répondu.',
+      reason: counts.non > 0 ? 'Personne de dispo.' : 'Personne n’a encore répondu.',
     };
   }
 
   if (potential < MIN_PLAYERS) {
-    const manquants = MIN_PLAYERS - potential;
     return {
       venueId: null,
       outlook: 'insuffisant',
-      reason: `Il manque encore ${plural(manquants, 'joueur')} pour que ça vaille le coup.`,
+      reason: `${players(potential)}, il en faut ${MIN_PLAYERS}.`,
     };
   }
 
   if (sure >= CROWD_THRESHOLD) {
-    return {
-      venueId: 'sceaux',
-      outlook: 'foule',
-      reason: `${sure} joueurs, il va falloir faire tourner ou monter trois équipes.`,
-    };
+    return { venueId: 'sceaux', outlook: 'foule', reason: tally(sure, maybe) };
   }
 
   if (sure >= SCEAUX_THRESHOLD) {
-    return {
-      venueId: 'sceaux',
-      outlook: 'ok',
-      reason: `${sure} joueurs sûrs, autant prendre le grand terrain.`,
-    };
+    return { venueId: 'sceaux', outlook: 'ok', reason: tally(sure, maybe) };
   }
 
   if (sure < MIN_PLAYERS) {
-    return {
-      venueId: 'five',
-      outlook: 'incertain',
-      reason: `Seulement ${plural(sure, 'joueur')} sûr${sure > 1 ? 's' : ''}, ça dépend des ${plural(maybe, 'indécis')}.`,
-    };
+    return { venueId: 'five', outlook: 'incertain', reason: tally(sure, maybe) };
   }
 
-  if (potential >= SCEAUX_THRESHOLD) {
-    return {
-      venueId: 'five',
-      outlook: 'ok',
-      reason: `${sure} joueurs sûrs. Si les ${plural(maybe, 'indécis')} se confirment, on passe au parc.`,
-    };
-  }
-
-  return {
-    venueId: 'five',
-    outlook: 'ok',
-    reason: `${sure} joueurs, c'est le format qui colle.`,
-  };
+  return { venueId: 'five', outlook: 'ok', reason: tally(sure, maybe) };
 }
 
 /** L'heure par défaut, celle de la pause déj. */

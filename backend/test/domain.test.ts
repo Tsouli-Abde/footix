@@ -17,7 +17,7 @@ describe('recommendVenue', () => {
   it('ne propose rien tant qu\'on est trop peu', () => {
     const { venueId, reason } = recommendVenue(counts(3, 1));
     expect(venueId).toBeNull();
-    expect(reason).toContain('manque');
+    expect(reason).toContain(`il en faut ${MIN_PLAYERS}`);
   });
 
   it('compte les "si besoin" pour atteindre le minimum, sans les traiter comme des présents', () => {
@@ -39,7 +39,7 @@ describe('recommendVenue', () => {
   it('reste au Five sous le seuil même si les "si besoin" feraient le nombre', () => {
     const { venueId, reason } = recommendVenue(counts(9, 5));
     expect(venueId).toBe('five');
-    expect(reason).toContain('parc');
+    expect(reason).toBe('9 joueurs sûrs, 5 si besoin.');
   });
 
   it('ne recommande jamais le match externe', () => {
@@ -69,12 +69,10 @@ describe('recommendVenue', () => {
     expect(foule.venueId).toBe('sceaux');
   });
 
-  it('accorde correctement le pluriel, y compris sur indécis', () => {
-    // Cinq potentiels, il en manque exactement un : le singulier doit tenir.
-    expect(recommendVenue(counts(5, 0)).reason).toContain('1 joueur pour');
-    // « indécis » est invariable, il ne doit jamais prendre un second s.
-    expect(recommendVenue(counts(3, 3)).reason).toContain('3 indécis');
-    expect(recommendVenue(counts(3, 3)).reason).not.toContain('indéciss');
+  it('accorde le pluriel des joueurs', () => {
+    expect(recommendVenue(counts(1, 0)).reason).toBe(`1 joueur, il en faut ${MIN_PLAYERS}.`);
+    expect(recommendVenue(counts(1, 5)).reason).toBe('1 joueur sûr, 5 si besoin.');
+    expect(recommendVenue(counts(8, 0)).reason).toBe('8 joueurs sûrs.');
   });
 });
 

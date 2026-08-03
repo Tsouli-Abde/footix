@@ -8,11 +8,7 @@ import type { EventSummary } from '../types';
 
 const FRIDAYS = upcomingFridays(3);
 
-/**
- * Créer un sondage tient en un clic : la date suffit, tout le reste a une valeur
- * par défaut. Les champs facultatifs restent cachés derrière un bouton pour que
- * ça se voie qu'ils le sont.
- */
+/** La date suffit à créer un sondage, tout le reste a une valeur par défaut. */
 export function CreateEventPage() {
   const navigate = useNavigate();
 
@@ -22,7 +18,7 @@ export function CreateEventPage() {
   const [title, setTitle] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [deadline, setDeadline] = useState<string | null>(null);
-  /** Heure explicite. Null tant qu'on garde le créneau habituel de midi. */
+  /** Heure explicite. Null tant qu'on garde le créneau de midi. */
   const [time, setTime] = useState<string | null>(null);
   const [organizerName, setOrganizerName] = useState(rememberedName);
 
@@ -65,23 +61,14 @@ export function CreateEventPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">On joue quand ?</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Choisis un jour et c’est parti. Le reste est facultatif, tu peux tout laisser tel quel.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold">On joue quand ?</h1>
 
       {duplicate && (
         <Alert tone="info">
-          <p className="font-medium">Il y a déjà un sondage ce jour-là.</p>
-          <p className="mt-1">
-            Pas la peine d’en ouvrir un deuxième,{' '}
-            <Link to={`/e/${duplicate.publicToken}`} className="font-medium underline">
-              réponds sur celui-ci
-            </Link>{' '}
-            ou prends un autre jour.
-          </p>
+          Un sondage existe déjà ce jour-là.{' '}
+          <Link to={`/e/${duplicate.publicToken}`} className="font-medium underline">
+            L’ouvrir
+          </Link>
         </Alert>
       )}
 
@@ -124,8 +111,8 @@ export function CreateEventPage() {
         )}
 
         <p className="text-sm text-slate-500">
-          {time ? `Rendez-vous à ${time}.` : 'On joue sur la pause déj, pas besoin de préciser l’heure.'} Les réponses
-          ferment {deadline ? 'à l’heure que tu as choisie' : 'la veille à 18h'}.
+          Match à {time ?? '12h'}
+          {!deadline && ', réponses jusqu’à la veille 18h'}.
         </p>
       </Card>
 
@@ -137,13 +124,10 @@ export function CreateEventPage() {
           id="organizer"
           value={organizerName}
           onChange={(e) => setOrganizerName(e.target.value)}
-          placeholder="Pour que l’équipe sache qui organise"
+          placeholder="Prénom"
           maxLength={60}
           className={`${inputClass} sm:max-w-xs`}
         />
-        <p className="text-xs text-slate-500">
-          Tu gardes la main sur ce sondage grâce à ton lien de gestion. Tout le monde peut voir les réponses.
-        </p>
       </Card>
 
       <div className="space-y-3">
@@ -157,7 +141,6 @@ export function CreateEventPage() {
               onChange={(e) => setTime(e.target.value)}
               className={`${inputClass} sm:max-w-xs`}
             />
-            <p className="mt-1 text-xs text-slate-500">Utile quand on sort du créneau habituel de midi.</p>
           </OptionalField>
         )}
 
@@ -172,7 +155,6 @@ export function CreateEventPage() {
               maxLength={120}
               className={inputClass}
             />
-            <p className="mt-1 text-xs text-slate-500">Laisse vide et c’est la date qui sert de titre.</p>
           </OptionalField>
         )}
 

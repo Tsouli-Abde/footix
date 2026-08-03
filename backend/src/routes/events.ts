@@ -48,7 +48,7 @@ eventsRouter.post(
 
     // Un sondage pour un match déjà passé n'a pas de sens et fausse l'historique.
     if (matchDate.getTime() < Date.now()) {
-      throw badRequest('Ce jour est déjà passé, choisis une date à venir');
+      throw badRequest('Ce jour est déjà passé');
     }
 
     const existing = await prisma.event.findUnique({ where: { occurrenceKey }, include: eventInclude });

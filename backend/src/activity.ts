@@ -4,13 +4,11 @@ import { formatMatchDate } from './format.js';
 import { pushToAll } from './push.js';
 
 /**
- * Fil d'activité de l'équipe.
+ * Fil d'activité de l'équipe : chaque moment notable y laisse une ligne, que le
+ * front affiche en toast et dans la cloche.
  *
- * Chaque moment notable y laisse une ligne, que le front affiche en notification
- * in-app (toast et cloche). Le push OS est réservé aux deux seuls moments qui
- * demandent quelque chose aux gens : le sondage qui s'ouvre et le récapitulatif
- * de la veille. Tout le reste (réponses, clôture, score) reste dans l'app, pour
- * que recevoir une notification garde du sens.
+ * Le push OS est réservé aux deux moments qui demandent quelque chose aux gens,
+ * l'ouverture du sondage et le récapitulatif de la veille.
  */
 
 export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
@@ -76,10 +74,7 @@ export const announceAnswer = (event: EventLike, name: string, availability: Ava
     push: false,
   });
 
-/**
- * Récapitulatif de la veille : où on en est et ce que ça donne.
- * Moment fort, c'est le message qui décide si les gens viennent ou pas.
- */
+/** Récapitulatif de la veille : où on en est et où on joue. */
 export const announceReminder = (event: EventLike, body: string) =>
   recordActivity({
     type: 'rappel',
@@ -89,25 +84,19 @@ export const announceReminder = (event: EventLike, body: string) =>
     push: true,
   });
 
-/**
- * Clôture avec lieu retenu.
- *
- * Pas de push : le récapitulatif de la veille a déjà annoncé où on jouerait, et
- * la clôture tombe souvent quelques heures après. Ça reste dans le fil, visible
- * en ouvrant l'app.
- */
+/** Clôture. Pas de push : le récapitulatif de la veille a déjà annoncé le lieu. */
 export const announceClose = (event: EventLike, venue: string | null) => {
   const label = venueLabel(venue);
   return recordActivity({
     type: 'cloture',
     title: eventLabel(event),
-    body: label ? `C'est décidé, on joue à ${label}.` : 'Vote clôturé, match annulé.',
+    body: label ? `On joue à ${label}.` : 'Match annulé.',
     eventPublicToken: event.publicToken,
     push: false,
   });
 };
 
-/** Score saisi après le match. In-app seulement, personne n'a besoin d'être alerté. */
+/** Score saisi après le match. In-app seulement. */
 export const announceScore = (event: EventLike, score: string) =>
   recordActivity({
     type: 'score',

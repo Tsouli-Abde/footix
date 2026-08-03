@@ -10,10 +10,7 @@ import { VenueCard } from '../components/VenueCard';
 import { Card, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
 
-/**
- * La page de réponse, c'est le lien qu'on colle sur Teams.
- * Tout le monde voit les réponses en direct, comme sur le Doodle qu'elle remplace.
- */
+/** La page de réponse : le lien qu'on colle sur Teams. */
 export function EventPage() {
   const { publicToken = '' } = useParams();
   const load = useCallback(() => api.getEvent(publicToken), [publicToken]);
@@ -32,13 +29,10 @@ export function EventPage() {
       <Card>
         <h2 className="mb-4 text-lg font-semibold">Qui vient</h2>
         <AnswerList event={event} />
-        {event.status === 'ouvert' && (
-          <p className="mt-4 text-xs text-slate-400">La page se met à jour toute seule toutes les 7 secondes.</p>
-        )}
       </Card>
 
       <Card>
-        <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" hint="À coller dans le canal Teams." />
+        <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" />
       </Card>
     </div>
   );

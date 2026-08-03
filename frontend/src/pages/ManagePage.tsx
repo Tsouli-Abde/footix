@@ -11,10 +11,7 @@ import { usePolledEvent } from '../hooks/usePolledEvent';
 import { formatMatchDate, toDateInput, toDateTimeLocal } from '../lib/dates';
 import type { FootixEvent } from '../types';
 
-/**
- * Vue organisateur. Avoir le lien suffit à gérer le sondage depuis n'importe
- * quel appareil, sans compte.
- */
+/** Vue organisateur : avoir le lien suffit à gérer le sondage, sans compte. */
 export function ManagePage() {
   const { organizerToken = '' } = useParams();
   const navigate = useNavigate();
@@ -55,12 +52,8 @@ export function ManagePage() {
       {actionError && <Alert>{actionError}</Alert>}
 
       <Card className="space-y-4">
-        <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" hint="Celui qu’on colle sur Teams." />
-        <CopyLink
-          path={`/manage/${organizerToken}`}
-          label="Ton lien de gestion"
-          hint="Garde-le pour toi, il permet de clôturer et de modifier."
-        />
+        <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" />
+        <CopyLink path={`/manage/${organizerToken}`} label="Ton lien de gestion" hint="Garde-le pour toi." />
       </Card>
 
       <Card>
@@ -74,7 +67,7 @@ export function ManagePage() {
         <>
           <ResultForm event={event} onSave={(result) => void run(() => api.saveResult(organizerToken, result))} />
           <Card className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-slate-600">Le sondage est clôturé. Tu peux le rouvrir si tu as été trop vite.</p>
+            <p className="text-sm text-slate-600">Sondage clôturé.</p>
             <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
               Rouvrir
             </Button>
@@ -105,7 +98,7 @@ export function ManagePage() {
   );
 }
 
-/** Saisie du score après le match. Modifiable autant qu'on veut. */
+/** Saisie du score après le match. */
 function ResultForm({
   event,
   onSave,
@@ -120,10 +113,7 @@ function ResultForm({
 
   return (
     <Card className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Le résultat</h2>
-        <p className="mt-1 text-sm text-slate-500">Une fois le match joué, note le score. Tout le monde le verra.</p>
-      </div>
+      <h2 className="text-lg font-semibold">Le résultat</h2>
 
       <div className="grid gap-3 sm:grid-cols-[8rem_1fr]">
         <Field label="Score">
@@ -154,14 +144,7 @@ function CloseCard({ event, onClose }: { event: FootixEvent; onClose: (venueId: 
 
   return (
     <Card className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Clôturer</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          {event.recommendation.venue
-            ? `L’app propose ${event.recommendation.venue.label}, mais tu décides.`
-            : 'Choisis le lieu, ou clôture sans si le match tombe à l’eau.'}
-        </p>
-      </div>
+      <h2 className="text-lg font-semibold">Clôturer</h2>
 
       <div className="flex flex-wrap items-end gap-3">
         <Field label="On joue où">
@@ -199,7 +182,7 @@ function EditCard({
     <Card className="space-y-5">
       <h2 className="text-lg font-semibold">Modifier</h2>
 
-      <Field label="Titre" hint="Vide = la date sert d’intitulé.">
+      <Field label="Titre">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -220,7 +203,7 @@ function EditCard({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Jour du match" hint="L’heure reste midi.">
+        <Field label="Jour du match">
           <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className={inputClass} />
         </Field>
         <Field label="Fin des réponses">
