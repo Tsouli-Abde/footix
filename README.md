@@ -55,25 +55,67 @@ Si personne ne clôture, l'app le fait toute seule **trois heures avant le coup 
 retenant le lieu qu'elle conseillait. C'est volontairement silencieux : c'est du ménage, pas
 une décision, ça ne mérite pas de notification.
 
-## Développement local
+## Lancer l'app sur sa machine
 
-Deux terminaux, Node 22 :
+Il faut Docker et Node 22. Deux façons de faire, selon ce qu'on veut.
+
+### Juste l'essayer
+
+Tout dans Docker, une commande depuis la racine :
 
 ```bash
-cd backend && cp .env.example .env && npm install && npx prisma migrate dev && npm run dev
+docker compose up -d --build
+```
+
+L'app est sur **http://localhost:8090**. Les migrations sont appliquées au démarrage du
+conteneur, il n'y a rien d'autre à faire. Pour avoir des données sous les yeux (un sondage
+pour le prochain vendredi, puis une équipe et des matchs passés), avec les liens affichés
+en sortie :
+
+```bash
+docker compose exec backend node dist/scripts/seed.js
+```
+
+```bash
+docker compose exec backend node dist/scripts/seed-demo.js
+```
+
+Pour arrêter, `docker compose down` (ajouter `-v` pour repartir d'une base vide).
+
+### Développer dessus
+
+Là on veut le rechargement à chaud, donc seule la base reste dans Docker. Trois terminaux,
+depuis la racine puis dans chaque dossier :
+
+```bash
+docker compose up -d db
+```
+
+```bash
+cd backend && cp .env.example .env && npm install && npx prisma migrate deploy && npm run dev
 ```
 
 ```bash
 cd frontend && npm install && npm run dev
 ```
 
-Le front tourne sur http://localhost:5173 et proxifie `/api` vers le backend (port 3001).
+Le front tourne sur **http://localhost:5173** et proxifie `/api` vers le backend (port 3001).
+Le conteneur de base publie le port **5433** sur la machine, c'est ce que pointe
+`.env.example` — le 5432 reste donc libre pour un PostgreSQL déjà installé.
 
-Pour avoir des données sous les yeux (un sondage pour le prochain vendredi, puis une équipe
-et des matchs passés), avec les liens affichés en sortie :
+Les données de démonstration, ici, se chargent directement :
 
 ```bash
 cd backend && npm run seed && npm run seed:demo
+```
+
+### Les tests
+
+La base de test (`footix_test`) est créée au premier démarrage du conteneur, il n'y a donc
+rien à préparer :
+
+```bash
+cd backend && npm test
 ```
 
 ## Cas particuliers déjà gérés

@@ -11,8 +11,14 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-footix}
       POSTGRES_DB: footix
       TZ: Europe/Paris
+    ports:
+      # Publié pour que `npm run dev` et les tests, lancés sur la machine,
+      # puissent y accéder. 5433 laisse le 5432 libre à un PostgreSQL local.
+      - '5433:5432'
     volumes:
       - footix-data:/var/lib/postgresql/data
+      # Crée la base de test au premier démarrage du volume (voir npm test).
+      - ./deploy/dev-init-db.sql:/docker-entrypoint-initdb.d/dev-init-db.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U footix']
       interval: 5s

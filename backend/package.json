@@ -13,8 +13,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx src/scripts/seed.ts",
     "seed:demo": "tsx src/scripts/seed-demo.ts",
-    "test": "DATABASE_URL=\"postgresql://footix:footix@localhost:5433/footix_test?schema=public\" VAPID_PUBLIC_KEY=\"BNCNZYAGKLiKh9ljwbi4E4ou3_7aMK1W3NfS4nlVeZgFQ3HJaZdpbmRbtsvTzn6n_DO4P8lX642jUBeOnIHShAI\" VAPID_PRIVATE_KEY=\"8dhJJ3qTEX5qZgEqDHM9bI5IVe0gCDJoSpBl_0RZ0tg\" vitest run",
-    "test:watch": "DATABASE_URL=\"postgresql://footix:footix@localhost:5433/footix_test?schema=public\" vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "tick": "tsx src/jobs/tick.ts"
   },
   "dependencies": {
