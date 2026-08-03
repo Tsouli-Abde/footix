@@ -13,29 +13,17 @@ export type EventType = (typeof EVENT_TYPES)[number];
 /**
  * Les lieux sont en dur : on joue toujours aux deux mêmes endroits, et le but
  * de l'app est justement d'éviter d'avoir à en rediscuter chaque semaine.
- *
- * "externe" n'est jamais recommandé et n'apparaît pas côté votants. Il existe
- * seulement pour que l'organisateur puisse le choisir à la clôture, dans le cas
- * rare d'un match contre une autre boîte.
  */
 export const VENUES = {
   five: {
     id: 'five',
     label: 'Le Five',
     note: 'Terrain synthétique, 5 ou 6 contre 6.',
-    organizerOnly: false,
   },
   sceaux: {
     id: 'sceaux',
     label: 'Parc de Sceaux',
     note: 'Grand terrain en herbe.',
-    organizerOnly: false,
-  },
-  externe: {
-    id: 'externe',
-    label: 'Match contre une autre boîte',
-    note: 'À caler à la main.',
-    organizerOnly: true,
   },
 } as const;
 

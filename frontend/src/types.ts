@@ -12,8 +12,6 @@ export type Venue = {
   id: string;
   label: string;
   note: string;
-  /** Vrai pour le match contre une autre boîte, que les votants ne voient pas. */
-  organizerOnly?: boolean;
 };
 
 export type Participant = {

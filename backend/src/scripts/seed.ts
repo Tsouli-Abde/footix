@@ -23,7 +23,7 @@ const event =
   (await prisma.event.create({
     data: {
       title: null, // sans titre, c'est la date qui sert d'intitulé
-      description: 'Le match de la semaine, sur la pause déj.',
+      description: null,
       organizerName: 'Tsouli',
       matchDate,
       occurrenceKey,

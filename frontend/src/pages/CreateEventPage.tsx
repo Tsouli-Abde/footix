@@ -110,10 +110,6 @@ export function CreateEventPage() {
           <input type="date" value={toDateInput(matchDate)} onChange={(e) => pickDate(e.target.value)} className={`${inputClass} sm:max-w-xs`} />
         )}
 
-        <p className="text-sm text-slate-500">
-          Match à {time ?? '12h'}
-          {!deadline && ', réponses jusqu’à la veille 18h'}.
-        </p>
       </Card>
 
       <Card className="space-y-2">

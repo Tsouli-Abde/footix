@@ -50,7 +50,7 @@ model Event {
   /// "ouvert" | "cloture"
   status String @default("ouvert")
 
-  /// Lieu retenu à la clôture ("five" | "sceaux" | "externe").
+  /// Lieu retenu à la clôture ("five" | "sceaux").
   /// L'app recommande, l'organisateur tranche.
   chosenVenue String?
 

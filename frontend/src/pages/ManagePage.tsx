@@ -53,7 +53,7 @@ export function ManagePage() {
 
       <Card className="space-y-4">
         <CopyLink path={`/e/${event.publicToken}`} label="Lien à partager" />
-        <CopyLink path={`/manage/${organizerToken}`} label="Ton lien de gestion" hint="Garde-le pour toi." />
+        <CopyLink path={`/manage/${organizerToken}`} label="Ton lien de gestion" />
       </Card>
 
       <Card>

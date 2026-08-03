@@ -42,9 +42,11 @@ describe('recommendVenue', () => {
     expect(reason).toBe('9 joueurs sûrs, 5 si besoin.');
   });
 
-  it('ne recommande jamais le match externe', () => {
+  it('ne propose que les deux lieux connus', () => {
     for (let oui = 0; oui <= 30; oui++) {
-      expect(recommendVenue(counts(oui, 3)).venueId).not.toBe('externe');
+      const { venueId } = recommendVenue(counts(oui, 3));
+      // Sous le minimum de joueurs, aucun lieu n'est proposé.
+      if (venueId) expect(['five', 'sceaux']).toContain(venueId);
     }
   });
 

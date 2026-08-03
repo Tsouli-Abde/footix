@@ -78,12 +78,11 @@ export function serializeEventForOrganizer(event: EventWithParticipants) {
   return {
     ...serializeEvent(event),
     organizerToken: event.organizerToken,
-    /** Les lieux proposés à la clôture, y compris celui réservé à l'organisateur. */
+    /** Les lieux proposés à la clôture. */
     venues: Object.values(VENUES).map((venue) => ({
       id: venue.id,
       label: venue.label,
       note: venue.note,
-      organizerOnly: venue.organizerOnly,
     })),
   };
 }
