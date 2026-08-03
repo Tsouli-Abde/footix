@@ -22,8 +22,8 @@ Les deux terrains sont en dur dans le code (`backend/src/domain.ts`) :
 
 Les "si besoin" ne comptent jamais comme des présents. Ils servent seulement à signaler
 qu'on pourrait basculer au parc s'ils se confirment. L'app conseille, l'organisateur tranche
-au moment de clôturer, et il peut choisir autre chose (le match contre une autre boîte est
-proposé uniquement de son côté, jamais aux votants).
+au moment de clôturer : il valide le lieu proposé, prend l'autre, ou clôture sans lieu si le
+match tombe à l'eau.
 
 L'heure est facultative : par défaut on joue sur la pause déj et l'app ne l'affiche pas.
 L'organisateur peut en fixer une quand on sort du créneau habituel.
@@ -46,7 +46,9 @@ Autres partis pris, hérités de l'usage réel :
   secondes, largement suffisant pour une trentaine de personnes.
 - **Un seul sondage par jour.** Créer un doublon renvoie vers celui qui existe déjà.
 - **Le prénom identifie la personne.** Ressaisir le même prénom (accents et casse
-  indifférents) recharge sa réponse au lieu d'en créer une deuxième.
+  indifférents) recharge sa réponse au lieu d'en créer une deuxième. L'appareil qui a répondu
+  retient l'id de sa réponse : c'est ce qui permet de distinguer « je reviens changer d'avis »,
+  silencieux, de « je porte le même prénom qu'un autre », qui demande confirmation.
 
 Une fois le match joué, l'organisateur peut noter le **score**, visible ensuite par tout le
 monde.
@@ -67,7 +69,7 @@ Tout dans Docker, une commande depuis la racine :
 docker compose up -d --build
 ```
 
-L'app est sur **http://localhost:8090**. Les migrations sont appliquées au démarrage du
+L'app est sur **http://localhost:29090**. Les migrations sont appliquées au démarrage du
 conteneur, il n'y a rien d'autre à faire. Pour avoir des données sous les yeux (un sondage
 pour le prochain vendredi, puis une équipe et des matchs passés), avec les liens affichés
 en sortie :
@@ -99,9 +101,24 @@ cd backend && cp .env.example .env && npm install && npx prisma migrate deploy &
 cd frontend && npm install && npm run dev
 ```
 
-Le front tourne sur **http://localhost:5173** et proxifie `/api` vers le backend (port 3001).
-Le conteneur de base publie le port **5433** sur la machine, c'est ce que pointe
-`.env.example` — le 5432 reste donc libre pour un PostgreSQL déjà installé.
+Le front tourne sur **http://localhost:29173** et proxifie `/api` vers le backend
+(port **29301**). Le conteneur de base publie le port **29433**, ce que pointe déjà
+`.env.example`.
+
+Tous les ports ouverts sur la machine sont en **29xxx**, choisis exprès : cette plage n'est
+utilisée par presque rien, et elle est hors de la plage éphémère de Windows (qui commence à
+49152), donc jamais tirée au sort par le système. Les ports habituels — 3001, 5173, 5432,
+8080 — restent libres pour tes autres projets. Récapitulatif :
+
+| Port | Quoi |
+| --- | --- |
+| 29090 | l'app en Docker |
+| 29173 | le front Vite en dev |
+| 29301 | l'API en dev |
+| 29433 | PostgreSQL (bases `footix` et `footix_test`) |
+
+À l'intérieur des conteneurs le backend écoute toujours sur 3001, mais ce port n'est jamais
+publié : il ne peut entrer en conflit avec rien.
 
 Les données de démonstration, ici, se chargent directement :
 
@@ -124,8 +141,8 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 
 | Situation | Ce que fait l'app |
 | --- | --- |
-| Deux personnes portent le même prénom | Premier arrivé premier servi : le second remplace la réponse du premier, à lui d'ajouter une initiale (« Thomas B »). L'organisateur peut retirer une réponse |
-| Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents. Sur l'appareil qui a répondu, le formulaire préremplit la réponse envoyée |
+| Deux personnes portent le même prénom | Au clic sur *Envoyer*, l'app relit les réponses : si ce prénom appartient à quelqu'un d'autre, elle demande « C'est toi ? » avant d'écraser. On confirme, ou on ajoute une initiale (« Thomas B ») |
+| Quelqu'un revient changer d'avis | Le même prénom écrase sa propre réponse, accents et casse indifférents. Sur l'appareil qui a répondu, le formulaire préremplit la réponse envoyée et ne demande rien |
 | Personne n'a répondu | Message distinct de « personne n'est dispo », pour ne pas confondre silence et refus |
 | Trop peu de monde | On annonce le nombre de joueurs et le minimum, plutôt qu'un lieu |
 | Ça ne tient qu'aux indécis | Les « si besoin » sont comptés à part, la carte passe en orange |
@@ -188,7 +205,7 @@ cd backend && npm test
 docker compose up -d --build
 ```
 
-L'app est servie sur http://localhost:8090 (8080 étant souvent déjà pris en local). Nginx sert
+L'app est servie sur http://localhost:29090 (voir la note sur les ports plus haut). Nginx sert
 le front et proxifie `/api` vers le backend, donc tout est sur la même origine et il n'y a pas
 de CORS à configurer. Les routes type `/e/<token>` fonctionnent en accès direct grâce au
 repli SPA de nginx.

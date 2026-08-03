@@ -1,7 +1,10 @@
 /**
- * Même normalisation que le backend (backend/src/domain.ts). Sert uniquement à
- * reconnaître ses propres réponses dans le fil d'activité, pour ne pas se
- * notifier soi-même.
+ * Même normalisation que le backend (backend/src/domain.ts) : « Jean-Luc » et
+ * « jean luc » désignent la même personne.
+ *
+ * Deux usages, tous deux ponctuels : reconnaître ses propres réponses dans le
+ * fil d'activité pour ne pas se notifier soi-même, et vérifier au moment de
+ * l'envoi que le prénom saisi n'est pas déjà celui de quelqu'un d'autre.
  */
 export function normalizeName(name: string): string {
   return name
@@ -23,8 +26,8 @@ const answerKey = (publicToken: string) => `footix.answer.${publicToken}`;
 /**
  * La réponse qu'on a envoyée depuis cet appareil, retenue par sondage.
  *
- * C'est ce qui identifie « ma » réponse : on ne compare jamais les prénoms entre
- * eux, taper un prénom déjà présent dans la liste ne déclenche donc rien.
+ * C'est ce qui identifie « ma » réponse, et ce qui distingue « je reviens changer
+ * d'avis » de « je porte le même prénom que quelqu'un d'autre ».
  */
 export const rememberedAnswer = (publicToken: string) => localStorage.getItem(answerKey(publicToken));
 export const rememberAnswer = (publicToken: string, participantId: string) =>
