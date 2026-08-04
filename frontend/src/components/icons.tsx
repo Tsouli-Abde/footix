@@ -51,14 +51,6 @@ export const MapPinIcon = (props: IconProps) => (
   </Icon>
 );
 
-export const TrophyIcon = (props: IconProps) => (
-  <Icon {...props}>
-    <path d="M6 4h12v4a6 6 0 0 1-12 0V4Z" />
-    <path d="M6 6H4a2 2 0 0 0 2 3M18 6h2a2 2 0 0 1-2 3" />
-    <path d="M12 14v3M9 21h6M10 21v-2h4v2" />
-  </Icon>
-);
-
 export const BanIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="12" cy="12" r="9" />

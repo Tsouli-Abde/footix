@@ -36,12 +36,6 @@ export const closeEventSchema = z.object({
   chosenVenue: venueId.nullable().optional(),
 });
 
-/** Ce qu'on remplit une fois le match joué. */
-export const resultSchema = z.object({
-  score: z.string().trim().max(40).nullable().optional(),
-  resultNote: z.string().trim().max(280).nullable().optional(),
-});
-
 export const answerSchema = z.object({
   name: z.string().trim().min(2, 'Il me faut au moins deux lettres').max(60),
   availability: z.enum(AVAILABILITY_VALUES),

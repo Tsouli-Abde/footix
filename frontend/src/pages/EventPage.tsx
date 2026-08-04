@@ -5,7 +5,6 @@ import { AnswerForm } from '../components/AnswerForm';
 import { AnswerList } from '../components/AnswerList';
 import { CopyLink } from '../components/CopyLink';
 import { EventHeader } from '../components/EventHeader';
-import { ResultCard } from '../components/ResultCard';
 import { VenueCard } from '../components/VenueCard';
 import { Card, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
@@ -21,7 +20,6 @@ export function EventPage() {
   return (
     <div className="space-y-6">
       <EventHeader event={event} />
-      <ResultCard event={event} />
       <VenueCard event={event} />
 
       {event.votingOpen && <AnswerForm event={event} onAnswered={setEvent} />}

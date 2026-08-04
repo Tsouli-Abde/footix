@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { prisma } from '../db.js';
 import { atMatchHour, occurrenceKeyFor, timeOf, withTime } from '../domain.js';
 import { conflict, notFound, route } from '../http.js';
-import { announceClose, announceScore } from '../activity.js';
-import { closeEventSchema, resultSchema, updateEventSchema } from '../schemas.js';
+import { announceClose } from '../activity.js';
+import { closeEventSchema, updateEventSchema } from '../schemas.js';
 import { eventInclude, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
 
 export const manageRouter = Router();
@@ -87,45 +87,17 @@ manageRouter.post(
   }),
 );
 
-/**
- * Le score, une fois le match joué. C'est le seul écrit qui arrive après coup,
- * et il reste visible par tout le monde sur le lien public.
- */
-manageRouter.patch(
-  '/manage/:organizerToken/result',
-  route(async (req, res) => {
-    const event = await loadByOrganizerToken(req.params.organizerToken);
-    const input = resultSchema.parse(req.body);
-
-    const score = input.score === undefined ? undefined : input.score || null;
-
-    const updated = await prisma.event.update({
-      where: { id: event.id },
-      data: {
-        score,
-        resultNote: input.resultNote === undefined ? undefined : input.resultNote || null,
-      },
-      include: eventInclude,
-    });
-
-    // On n'annonce que l'arrivée d'un vrai score, pas son effacement.
-    if (score) void announceScore(updated, score);
-
-    res.json({ event: serializeEventForOrganizer(updated) });
-  }),
-);
-
 /** Réouverture, si on a clôturé trop vite. */
 manageRouter.post(
   '/manage/:organizerToken/reopen',
   route(async (req, res) => {
     const event = await loadByOrganizerToken(req.params.organizerToken);
 
-    // Rouvrir remet à zéro le lieu et le score : le match est considéré comme
-    // pas encore joué, autant ne pas laisser traîner un résultat périmé.
+    // Rouvrir remet le lieu à zéro : le match est considéré comme pas encore
+    // joué, autant ne pas laisser traîner une décision périmée.
     const updated = await prisma.event.update({
       where: { id: event.id },
-      data: { status: 'ouvert', chosenVenue: null, score: null, resultNote: null },
+      data: { status: 'ouvert', chosenVenue: null },
       include: eventInclude,
     });
 

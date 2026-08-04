@@ -55,12 +55,6 @@ model Event {
   /// L'app recommande, l'organisateur tranche.
   chosenVenue String?
 
-  /// Score final, saisi librement après le match ("5-3", "on n'a pas compté").
-  score String?
-
-  /// Deux mots sur le match, à côté du score.
-  resultNote String?
-
   /// Date d'envoi du récapitulatif de la veille. Sert de garde-fou au job :
   /// tant qu'il est rempli, on ne renvoie pas le même rappel.
   reminderSentAt DateTime?
@@ -106,13 +100,13 @@ model Participant {
 
 /// Le fil d'activité de l'équipe : ce qui alimente les notifications in-app.
 ///
-/// Une ligne par événement notable (sondage ouvert, réponse, clôture, score).
+/// Une ligne par événement notable (sondage ouvert, réponse, rappel, clôture).
 /// Le front interroge ce fil par polling, en affiche les nouveautés en toast et
 /// en tient un compteur de non-lus. Global à l'équipe, pas de compte.
 model Activity {
   id String @id @default(cuid())
 
-  /// "vote_ouvert" | "reponse" | "cloture" | "score" | "annulation"
+  /// "vote_ouvert" | "reponse" | "rappel" | "cloture" | "annulation"
   type String
 
   title String

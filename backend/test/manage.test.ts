@@ -29,29 +29,20 @@ describe('gestion organisateur', () => {
     expect(res.body.event.votingOpen).toBe(false);
   });
 
-  it('enregistre puis efface le score', async () => {
+  it('rouvrir remet le lieu à zéro', async () => {
     const event = await openEvent();
     await request.post(`/api/manage/${event.organizerToken}/close`).send({ chosenVenue: 'five' });
-
-    const withScore = await request
-      .patch(`/api/manage/${event.organizerToken}/result`)
-      .send({ score: '5-3', resultNote: 'Serré.' });
-    expect(withScore.body.event.score).toBe('5-3');
-
-    // Le score est visible côté public.
-    const publicView = await request.get(`/api/events/${event.publicToken}`);
-    expect(publicView.body.event.score).toBe('5-3');
-  });
-
-  it('rouvrir remet à zéro le lieu et le score', async () => {
-    const event = await openEvent();
-    await request.post(`/api/manage/${event.organizerToken}/close`).send({ chosenVenue: 'five' });
-    await request.patch(`/api/manage/${event.organizerToken}/result`).send({ score: '5-3' });
 
     const reopened = await request.post(`/api/manage/${event.organizerToken}/reopen`);
     expect(reopened.body.event.status).toBe('ouvert');
     expect(reopened.body.event.chosenVenue).toBeNull();
-    expect(reopened.body.event.score).toBeNull();
+    expect(reopened.body.event.votingOpen).toBe(true);
+  });
+
+  it('n’expose plus de route de résultat', async () => {
+    const event = await openEvent();
+    const res = await request.patch(`/api/manage/${event.organizerToken}/result`).send({ score: '5-3' });
+    expect(res.status).toBe(404);
   });
 
   it('modifie le titre et le remet à nul quand on le vide', async () => {

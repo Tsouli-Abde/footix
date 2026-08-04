@@ -11,7 +11,7 @@ import { pushToAll } from './push.js';
  * l'ouverture du sondage et le récapitulatif de la veille.
  */
 
-export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
+export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'annulation'] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 type RecordInput = {
@@ -96,16 +96,6 @@ export const announceClose = (event: EventLike, venue: string | null) => {
     push: false,
   });
 };
-
-/** Score saisi après le match. In-app seulement. */
-export const announceScore = (event: EventLike, score: string) =>
-  recordActivity({
-    type: 'score',
-    title: eventLabel(event),
-    body: `Score final : ${score}.`,
-    eventPublicToken: event.publicToken,
-    push: false,
-  });
 
 export function serializeActivity(activity: {
   id: string;

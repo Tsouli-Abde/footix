@@ -27,10 +27,10 @@ const TEAM = [
 
 /** Matchs déjà joués, du plus récent au plus ancien. */
 const PAST_MATCHES = [
-  { date: new Date(2026, 6, 17), present: 13, maybe: 1, venue: 'sceaux', score: '6-4', note: 'Fin de match à l’arrache.' },
-  { date: new Date(2026, 6, 10), present: 8, maybe: 2, venue: 'five', score: '3-3', note: null },
-  { date: new Date(2026, 6, 3), present: 12, maybe: 2, venue: 'sceaux', score: '5-2', note: 'Karim en feu.' },
-  { date: new Date(2026, 5, 26), present: 7, maybe: 1, venue: 'five', score: null, note: 'On a arrêté de compter.' },
+  { date: new Date(2026, 6, 17), present: 13, maybe: 1, venue: 'sceaux' },
+  { date: new Date(2026, 6, 10), present: 8, maybe: 2, venue: 'five' },
+  { date: new Date(2026, 6, 3), present: 12, maybe: 2, venue: 'sceaux' },
+  { date: new Date(2026, 5, 26), present: 7, maybe: 1, venue: 'five' },
 ];
 
 /** Les `present` premiers répondent oui, les `maybe` suivants si besoin, le reste non. */
@@ -42,7 +42,7 @@ function availabilityAt(index: number, present: number, maybe: number): Availabi
 
 type PastMatch = (typeof PAST_MATCHES)[number];
 
-async function createPastMatch({ date, present, maybe, venue, score, note }: PastMatch) {
+async function createPastMatch({ date, present, maybe, venue }: PastMatch) {
   const matchDate = atMatchHour(date);
   const occurrenceKey = occurrenceKeyFor(matchDate);
 
@@ -58,8 +58,6 @@ async function createPastMatch({ date, present, maybe, venue, score, note }: Pas
       occurrenceKey,
       status: 'cloture',
       chosenVenue: venue,
-      score,
-      resultNote: note,
       publicToken: generateToken(),
       organizerToken: generateToken(),
       participants: {
@@ -72,7 +70,7 @@ async function createPastMatch({ date, present, maybe, venue, score, note }: Pas
     },
   });
 
-  console.log(`  ${occurrenceKey} : ${present} présents, ${venue}${score ? `, score ${score}` : ''}.`);
+  console.log(`  ${occurrenceKey} : ${present} présents, ${venue}.`);
 }
 
 console.log('Matchs déjà joués :');
