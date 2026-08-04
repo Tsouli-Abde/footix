@@ -11,7 +11,7 @@ import { ApiError } from './http.js';
  *
  * Ce que ça ne prétend pas être : de l'authentification. Il n'y a pas d'identité,
  * pas de traçabilité de qui a fait quoi, et le mot de passe circule dans un
- * en-tête à chaque appel — donc uniquement derrière HTTPS.
+ * en-tête à chaque appel, donc uniquement derrière HTTPS.
  */
 const DEFAULT_PASSWORD = 'motusadmin';
 

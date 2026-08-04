@@ -18,7 +18,7 @@ type Props = {
  *
  * « Ma » réponse est celle envoyée depuis cet appareil (son id est gardé en
  * local). Si le prénom saisi appartient à quelqu'un d'autre, on demande
- * confirmation avant d'écraser sa réponse — mais seulement au moment d'envoyer,
+ * confirmation avant d'écraser sa réponse, mais seulement au moment d'envoyer,
  * jamais pendant la frappe ni au rafraîchissement, sinon on accuse à tort
  * quelqu'un qui vient simplement de répondre.
  */

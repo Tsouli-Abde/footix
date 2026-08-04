@@ -21,9 +21,9 @@ Quatre réponses possibles :
 | **Si au parc** | je viens seulement si on joue au Parc de Sceaux |
 | **Non** | je ne viens pas |
 
-Les deux terrains sont en dur dans le code (`backend/src/domain.ts`) : **Le Five** (synthétique,
-5 ou 6 contre 6) et le **Parc de Sceaux** (grand terrain en herbe). Il faut au moins **6**
-joueurs pour que ça vaille le coup, et au-delà de **12** le Five devient trop petit.
+Les deux terrains sont en dur dans le code (`backend/src/domain.ts`) : le **Speedsoccer (five)** et le
+**Parc de Sceaux**. Il faut au moins **6** joueurs pour que ça vaille le coup, et au-delà de
+**12** le speedsoccer devient trop petit.
 
 ### Comment le lieu est choisi
 
@@ -35,15 +35,15 @@ Pour chaque terrain, deux nombres :
 - les **joueurs sûrs** : les *Oui*, plus les *Si au parc* quand il s'agit du parc ;
 - le **maximum atteignable** : les joueurs sûrs plus les *Si besoin*, qui viennent partout.
 
-Chaque terrain reçoit alors un état — `ok` (assez de monde sûr), `juste` (ça ne passe que si
-les *Si besoin* confirment), `trop_petit` (le Five au-delà de 12), `insuffisant` (pas assez de
-monde même au mieux) — et le classement départage dans cet ordre : l'état d'abord, le nombre
-de joueurs sûrs ensuite, le maximum atteignable, et le Five en dernier recours à égalité
+Chaque terrain reçoit alors un état : `ok` (assez de monde sûr), `juste` (ça ne passe que si
+les *Si besoin* confirment), `trop_petit` (le speedsoccer au-delà de 12), `insuffisant` (pas
+assez de monde même au mieux). Le classement départage ensuite dans cet ordre : l'état d'abord, le nombre
+de joueurs sûrs ensuite, le maximum atteignable, et le speedsoccer en dernier recours à égalité
 parfaite (c'est le terrain par défaut, il se réserve).
 
 C'est ce qui donne tout son sens au *Si au parc* : quatre personnes qui ne viennent qu'au parc
-peuvent faire basculer un match de 6 joueurs au Five vers 10 joueurs à Sceaux, ou sauver un
-match que le Five n'aurait pas permis.
+peuvent faire basculer un match de 6 joueurs au speedsoccer vers 10 joueurs à Sceaux, ou
+sauver un match que le speedsoccer n'aurait pas permis.
 
 Les **deux** propositions chiffrées sont renvoyées par l'API, pas seulement la gagnante :
 l'organisateur voit ce que l'autre terrain donnerait avant de trancher. L'app conseille, il
@@ -72,7 +72,7 @@ le job tourne.
 
 | Onglet | Ce qu'on y fait |
 | --- | --- |
-| Vue d'ensemble | nombre de sondages, de joueurs, de réponses, moyenne de présents, lieux retenus, appareils abonnés. Signale les sondages restés ouverts alors que le match est passé — le symptôme d'un job à l'arrêt |
+| Vue d'ensemble | nombre de sondages, de joueurs, de réponses, moyenne de présents, lieux retenus, appareils abonnés. Signale les sondages restés ouverts alors que le match est passé, le symptôme d'un job à l'arrêt |
 | Sondages | tous les sondages, en cours et passés : clôturer, rouvrir, supprimer, ou ouvrir la page de gestion pour modifier le détail |
 | Joueurs | qui répond quoi depuis le début, avec renommage (les fautes de frappe créent des joueurs fantômes) et retrait de tous les sondages |
 | Maintenance | lancer le battement horaire à la demande, couper un appareil abonné, vider le fil d'activité |
@@ -81,8 +81,8 @@ Le mot de passe se définit par `ADMIN_PASSWORD`. **Sans lui, c'est celui écrit
 dépôt qui s'applique** : il est donc à renseigner en production.
 
 Ce que cette vue n'est pas : de l'authentification. Il n'y a pas d'identité, donc aucune trace
-de qui a fait quoi, et le mot de passe voyage dans un en-tête à chaque appel — à n'exposer que
-derrière HTTPS. C'est le même parti pris que les tokens dans les liens, assumé pour un outil
+de qui a fait quoi, et le mot de passe voyage dans un en-tête à chaque appel, donc à n'exposer
+que derrière HTTPS. C'est le même parti pris que les tokens dans les liens, assumé pour un outil
 interne d'une trentaine de personnes.
 
 Les actions sur un sondage ne sont pas dupliquées côté serveur : la liste admin renvoie les
@@ -99,9 +99,6 @@ Autres partis pris, hérités de l'usage réel :
   indifférents) recharge sa réponse au lieu d'en créer une deuxième. L'appareil qui a répondu
   retient l'id de sa réponse : c'est ce qui permet de distinguer « je reviens changer d'avis »,
   silencieux, de « je porte le même prénom qu'un autre », qui demande confirmation.
-
-Une fois le match joué, l'organisateur peut noter le **score**, visible ensuite par tout le
-monde.
 
 Si personne ne clôture, l'app le fait toute seule **une fois le coup d'envoi passé**, en
 retenant le lieu qu'elle conseillait. Aucune notification, aucune trace dans le fil : c'est du
@@ -157,8 +154,8 @@ Le front tourne sur **http://localhost:29173** et proxifie `/api` vers le backen
 
 Tous les ports ouverts sur la machine sont en **29xxx**, choisis exprès : cette plage n'est
 utilisée par presque rien, et elle est hors de la plage éphémère de Windows (qui commence à
-49152), donc jamais tirée au sort par le système. Les ports habituels — 3001, 5173, 5432,
-8080 — restent libres pour tes autres projets. Récapitulatif :
+49152), donc jamais tirée au sort par le système. Les ports habituels (3001, 5173, 5432,
+8080) restent libres pour tes autres projets. Récapitulatif :
 
 | Port | Quoi |
 | --- | --- |
@@ -206,8 +203,8 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 ## Notifications
 
 Deux canaux complémentaires, alimentés par le même **fil d'activité** (modèle `Activity`) :
-chaque moment notable (sondage ouvert, réponse, rappel de la veille, clôture, score) y laisse
-une ligne.
+chaque moment notable (sondage ouvert, réponse, rappel de la veille, clôture) y laisse une
+ligne.
 
 - **In-app** : une cloche dans l'en-tête (compteur de non-lus + panneau déroulant) et des
   **toasts** qui surgissent quand quelque chose se passe pendant qu'on utilise l'app. Le front
@@ -216,7 +213,7 @@ une ligne.
 - **Push OS** (ci-dessous) : pour l'écran verrouillé ou l'app fermée. Volontairement limité
   aux deux seuls moments qui demandent quelque chose aux gens, soit **deux notifications par
   match au maximum** : à l'ouverture du sondage, et le récapitulatif de la veille. Les
-  réponses, la clôture et le score restent dans l'app, pour qu'une notification garde du sens.
+  réponses et la clôture restent dans l'app, pour qu'une notification garde du sens.
 
 ## Notifications push
 
@@ -311,7 +308,7 @@ de ce repo, cette étape se fait à la main sur la machine.
 
 Avant de déployer, vérifier que le port choisi (8095) est bien libre sur la machine et ne
 recoupe aucun port déjà utilisé par l'autre projet (`ss -ltn`), et que le nom de projet Docker
-Compose de l'autre application est lui aussi fixé (`name:` dans son compose file) — sinon le
+Compose de l'autre application est lui aussi fixé (`name:` dans son compose file), sinon le
 nommage de ses conteneurs et volumes dépend du nom du dossier où il est cloné, ce qui peut
 changer d'une machine à l'autre.
 
@@ -351,8 +348,7 @@ Organisateur (`:organizerToken`) :
 | --- | --- | --- |
 | `GET` `PATCH` `DELETE` | `/api/manage/:organizerToken` | consulter, modifier, supprimer |
 | `POST` | `/api/manage/:organizerToken/close` | clôturer et fixer le lieu |
-| `PATCH` | `/api/manage/:organizerToken/result` | noter le score après le match |
-| `POST` | `/api/manage/:organizerToken/reopen` | rouvrir (efface lieu et score) |
+| `POST` | `/api/manage/:organizerToken/reopen` | rouvrir (efface le lieu retenu) |
 
 
 ## Pistes pour la suite

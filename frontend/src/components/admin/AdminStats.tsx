@@ -46,7 +46,7 @@ export function AdminStats({ stats }: { stats: Stats }) {
       {stats.events.overdue > 0 && (
         <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
           {stats.events.overdue} sondage(s) encore ouvert(s) alors que le match est passé. Le battement horaire n’a pas
-          tourné — tu peux le lancer depuis l’onglet Maintenance.
+          tourné, tu peux le lancer depuis l’onglet Maintenance.
         </Card>
       )}
 

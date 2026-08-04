@@ -124,12 +124,6 @@ export const api = {
       body: JSON.stringify({ chosenVenue }),
     }).then((r) => r.event),
 
-  saveResult: (organizerToken: string, result: { score: string | null; resultNote: string | null }) =>
-    request<{ event: FootixEvent }>(`/manage/${organizerToken}/result`, {
-      method: 'PATCH',
-      body: JSON.stringify(result),
-    }).then((r) => r.event),
-
   reopenEvent: (organizerToken: string) =>
     request<{ event: FootixEvent }>(`/manage/${organizerToken}/reopen`, { method: 'POST' }).then((r) => r.event),
 

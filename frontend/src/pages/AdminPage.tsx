@@ -88,10 +88,7 @@ export function AdminPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Administration</h1>
-          <p className="mt-1 text-sm text-slate-500">Accès par mot de passe, sans compte ni traçabilité.</p>
-        </div>
+        <h1 className="text-2xl font-bold">Administration</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => void load()}>
             Rafraîchir

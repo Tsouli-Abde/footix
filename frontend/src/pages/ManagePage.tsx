@@ -4,7 +4,6 @@ import { api, ApiError } from '../api';
 import { AnswerList } from '../components/AnswerList';
 import { CopyLink } from '../components/CopyLink';
 import { EventHeader } from '../components/EventHeader';
-import { ResultCard } from '../components/ResultCard';
 import { VenueCard } from '../components/VenueCard';
 import { Alert, Button, Card, Field, inputClass, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
@@ -46,7 +45,6 @@ export function ManagePage() {
   return (
     <div className="space-y-6">
       <EventHeader event={event} />
-      <ResultCard event={event} />
       <VenueCard event={event} />
 
       {actionError && <Alert>{actionError}</Alert>}
@@ -64,15 +62,12 @@ export function ManagePage() {
       {event.status === 'ouvert' ? (
         <CloseCard event={event} onClose={(venueId) => void run(() => api.closeEvent(organizerToken, venueId))} />
       ) : (
-        <>
-          <ResultForm event={event} onSave={(result) => void run(() => api.saveResult(organizerToken, result))} />
-          <Card className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-slate-600">Sondage clôturé.</p>
-            <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
-              Rouvrir
-            </Button>
-          </Card>
-        </>
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-600">Sondage clôturé.</p>
+          <Button variant="secondary" onClick={() => void run(() => api.reopenEvent(organizerToken))}>
+            Rouvrir
+          </Button>
+        </Card>
       )}
 
       {editing ? (
@@ -98,44 +93,6 @@ export function ManagePage() {
   );
 }
 
-/** Saisie du score après le match. */
-function ResultForm({
-  event,
-  onSave,
-}: {
-  event: FootixEvent;
-  onSave: (result: { score: string | null; resultNote: string | null }) => void;
-}) {
-  const [score, setScore] = useState(event.score ?? '');
-  const [note, setNote] = useState(event.resultNote ?? '');
-
-  const dirty = score !== (event.score ?? '') || note !== (event.resultNote ?? '');
-
-  return (
-    <Card className="space-y-4">
-      <h2 className="text-lg font-semibold">Le résultat</h2>
-
-      <div className="grid gap-3 sm:grid-cols-[8rem_1fr]">
-        <Field label="Score">
-          <input value={score} onChange={(e) => setScore(e.target.value)} placeholder="5-3" maxLength={40} className={inputClass} />
-        </Field>
-        <Field label="Un mot (facultatif)">
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Beau but de Karim en fin de match."
-            maxLength={280}
-            className={inputClass}
-          />
-        </Field>
-      </div>
-
-      <Button onClick={() => onSave({ score: score.trim() || null, resultNote: note.trim() || null })} disabled={!dirty}>
-        {event.score || event.resultNote ? 'Mettre à jour le résultat' : 'Enregistrer le résultat'}
-      </Button>
-    </Card>
-  );
-}
 
 /** Clôture : l'app conseille un lieu, l'organisateur valide ou choisit autre chose. */
 function CloseCard({ event, onClose }: { event: FootixEvent; onClose: (venueId: string | null) => void }) {
@@ -154,11 +111,17 @@ function CloseCard({ event, onClose }: { event: FootixEvent; onClose: (venueId: 
               // L'effectif du terrain vient du serveur : il diffère d'un lieu à
               // l'autre dès que quelqu'un a répondu « si au parc ».
               const proposal = event.recommendation.proposals.find((item) => item.venue?.id === venue.id);
+              // Le libellé du terrain contient déjà une parenthèse, on enchaîne
+              // donc les précisions après deux points plutôt qu'en parenthèses.
+              const details = [
+                proposal ? `${proposal.sure} joueur${proposal.sure > 1 ? 's' : ''}` : null,
+                venue.id === suggested ? 'conseillé' : null,
+              ].filter(Boolean);
+
               return (
                 <option key={venue.id} value={venue.id}>
                   {venue.label}
-                  {proposal ? ` — ${proposal.sure} joueur${proposal.sure > 1 ? 's' : ''}` : ''}
-                  {venue.id === suggested ? ' (conseillé)' : ''}
+                  {details.length > 0 ? ` : ${details.join(', ')}` : ''}
                 </option>
               );
             })}
@@ -218,7 +181,7 @@ function EditCard({
         <Field label="Jour du match">
           <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className={inputClass} />
         </Field>
-        <Field label="Heure" hint="Vide = midi, l’heure habituelle.">
+        <Field label="Heure">
           <input type="time" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} className={inputClass} />
         </Field>
       </div>

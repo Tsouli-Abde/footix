@@ -26,7 +26,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
  *
  * Les liens sont affichés en clair dès qu'il y a la place (à partir de `sm`), et
  * repliés derrière un bouton en dessous : sur téléphone, trois libellés à côté du
- * logo et de la cloche ne tiennent pas. La cloche, elle, reste toujours dehors —
+ * logo et de la cloche ne tiennent pas. La cloche, elle, reste toujours dehors :
  * une notification qu'il faut déplier pour voir ne sert à rien.
  */
 export function NavMenu() {

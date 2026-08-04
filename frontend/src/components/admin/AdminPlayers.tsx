@@ -15,7 +15,7 @@ type Props = {
  * Les joueurs, reconstitués depuis les réponses : il n'y a pas de comptes, on
  * existe parce qu'on a répondu au moins une fois.
  *
- * Le renommage sert aux fautes de frappe — « Sarahh » trois semaines de suite
+ * Le renommage sert aux fautes de frappe : « Sarahh » trois semaines de suite
  * compte comme un joueur à part et fausse l'historique.
  */
 export function AdminPlayers({ players, busy, onRename, onRemove }: Props) {

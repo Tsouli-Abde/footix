@@ -60,12 +60,6 @@ export function AdminEvents({ events, busy, onClose, onReopen, onDelete }: Props
                     {event.chosenVenue.label}
                   </>
                 )}
-                {event.score && (
-                  <>
-                    <br />
-                    Score {event.score}
-                  </>
-                )}
               </p>
             </div>
 
