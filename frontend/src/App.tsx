@@ -1,5 +1,6 @@
 import { Link, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { AdminPage } from './pages/AdminPage';
 import { CreateEventPage } from './pages/CreateEventPage';
 import { EventPage } from './pages/EventPage';
 import { HomePage } from './pages/HomePage';
@@ -11,6 +12,7 @@ export function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="nouveau" element={<CreateEventPage />} />
+        <Route path="admin" element={<AdminPage />} />
         {/* Liens porteurs de token : /e/… se partage, /manage/… reste privé. */}
         <Route path="e/:publicToken" element={<EventPage />} />
         <Route path="manage/:organizerToken" element={<ManagePage />} />

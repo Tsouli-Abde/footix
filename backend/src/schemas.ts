@@ -47,6 +47,11 @@ export const answerSchema = z.object({
   availability: z.enum(AVAILABILITY_VALUES),
 });
 
+/** Renommage d'un joueur depuis la vue admin. */
+export const adminPlayerSchema = z.object({
+  name: z.string().trim().min(2, 'Il me faut au moins deux lettres').max(60),
+});
+
 export const createTemplateSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(500).nullable().optional(),

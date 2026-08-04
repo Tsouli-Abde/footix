@@ -37,6 +37,9 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD}@db:5432/footix?schema=public
       TZ: Europe/Paris
+      # À définir en production : sans lui, /admin s'ouvre avec le mot de passe
+      # par défaut, qui est écrit dans le dépôt.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:footix@example.com}

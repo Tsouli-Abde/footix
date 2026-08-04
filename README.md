@@ -64,6 +64,30 @@ Deux liens sont générés à la création :
 Le token dans l'URL est la seule preuve d'autorisation. C'est volontaire, ça évite les
 comptes pour un outil interne. Le corollaire, c'est que le lien de gestion ne se partage pas.
 
+## La vue d'administration
+
+`/admin`, derrière un **mot de passe partagé**. Elle sert à ce que les liens ne permettent
+pas : voir l'ensemble des sondages d'un coup, corriger un prénom mal saisi, ou vérifier que
+le job tourne.
+
+| Onglet | Ce qu'on y fait |
+| --- | --- |
+| Vue d'ensemble | nombre de sondages, de joueurs, de réponses, moyenne de présents, lieux retenus, appareils abonnés. Signale les sondages restés ouverts alors que le match est passé — le symptôme d'un job à l'arrêt |
+| Sondages | tous les sondages, en cours et passés : clôturer, rouvrir, supprimer, ou ouvrir la page de gestion pour modifier le détail |
+| Joueurs | qui répond quoi depuis le début, avec renommage (les fautes de frappe créent des joueurs fantômes) et retrait de tous les sondages |
+| Maintenance | lancer le battement horaire à la demande, couper un appareil abonné, vider le fil d'activité |
+
+Le mot de passe se définit par `ADMIN_PASSWORD`. **Sans lui, c'est celui écrit en dur dans le
+dépôt qui s'applique** : il est donc à renseigner en production.
+
+Ce que cette vue n'est pas : de l'authentification. Il n'y a pas d'identité, donc aucune trace
+de qui a fait quoi, et le mot de passe voyage dans un en-tête à chaque appel — à n'exposer que
+derrière HTTPS. C'est le même parti pris que les tokens dans les liens, assumé pour un outil
+interne d'une trentaine de personnes.
+
+Les actions sur un sondage ne sont pas dupliquées côté serveur : la liste admin renvoie les
+tokens de gestion, et le front réutilise les routes `/manage` que l'organisateur emploie déjà.
+
 Autres partis pris, hérités de l'usage réel :
 
 - **Les réponses sont visibles par tous, en direct.** La page se rafraîchit toutes les 7

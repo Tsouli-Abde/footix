@@ -33,6 +33,8 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://footix:${POSTGRES_PASSWORD:-footix}@db:5432/footix?schema=public
       TZ: Europe/Paris
+      # Mot de passe de /admin. Vide, c'est "motusadmin" qui s'applique.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # Notifications push : renseigner ces variables (via un .env à la racine ou
       # des secrets) active le push. Vides, les notifications sont désactivées.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}

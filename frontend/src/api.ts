@@ -1,4 +1,14 @@
-import type { Activity, Availability, EventSummary, FootixEvent } from './types';
+import { adminPassword } from './lib/admin';
+import type {
+  Activity,
+  AdminPlayer,
+  AdminStats,
+  AdminSubscriptions,
+  AdminTickResult,
+  Availability,
+  EventSummary,
+  FootixEvent,
+} from './types';
 
 /** En dev, Vite proxifie /api vers le backend. En prod, nginx fait la même chose. */
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
@@ -38,6 +48,45 @@ export type CreateEventInput = {
   organizerName?: string | null;
   title?: string | null;
   description?: string | null;
+};
+
+/**
+ * Appel administrateur : le mot de passe de la session voyage dans un en-tête.
+ *
+ * Il est lu à chaque appel plutôt que capturé une fois, pour qu'une déconnexion
+ * prenne effet immédiatement.
+ */
+function adminRequest<T>(path: string, init?: RequestInit, password?: string): Promise<T> {
+  const secret = password ?? adminPassword() ?? '';
+  return request<T>(path, { ...init, headers: { ...init?.headers, 'x-admin-password': secret } });
+}
+
+const admin = {
+  /** Valide un mot de passe sans rien stocker : c'est l'appelant qui décide. */
+  login: (password: string) => adminRequest<{ ok: true }>('/admin/login', { method: 'POST' }, password),
+
+  stats: () => adminRequest<AdminStats>('/admin/stats'),
+
+  events: () => adminRequest<{ events: FootixEvent[] }>('/admin/events').then((r) => r.events),
+
+  players: () => adminRequest<{ players: AdminPlayer[] }>('/admin/players').then((r) => r.players),
+
+  renamePlayer: (nameKey: string, name: string) =>
+    adminRequest<{ renamed: number; merged: number }>(`/admin/players/${encodeURIComponent(nameKey)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+
+  removePlayer: (nameKey: string) =>
+    adminRequest<{ removed: number }>(`/admin/players/${encodeURIComponent(nameKey)}`, { method: 'DELETE' }),
+
+  subscriptions: () => adminRequest<AdminSubscriptions>('/admin/subscriptions'),
+
+  removeSubscription: (id: string) => adminRequest<void>(`/admin/subscriptions/${id}`, { method: 'DELETE' }),
+
+  clearActivity: () => adminRequest<{ removed: number }>('/admin/activity', { method: 'DELETE' }),
+
+  tick: () => adminRequest<AdminTickResult>('/admin/tick', { method: 'POST' }),
 };
 
 export const api = {
@@ -98,4 +147,6 @@ export const api = {
 
   pushUnsubscribe: (endpoint: string) =>
     request<{ ok: true }>('/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint }) }),
+
+  admin,
 };

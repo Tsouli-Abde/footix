@@ -85,3 +85,45 @@ export type Activity = {
   url: string | null;
   createdAt: string;
 };
+
+/* --- Vue admin (backend/src/routes/admin.ts) --- */
+
+export type AdminStats = {
+  events: {
+    total: number;
+    open: number;
+    closed: number;
+    played: number;
+    cancelled: number;
+    /** Ouverts alors que le coup d'envoi est passé : le job ne les a pas balayés. */
+    overdue: number;
+  };
+  players: { total: number };
+  answers: Counts;
+  attendance: { averagePresent: number; bestMatch: number };
+  venues: { venueId: string; label: string; count: number }[];
+  firstMatch: string | null;
+  lastMatch: string | null;
+  activityCount: number;
+  push: { enabled: boolean; subscriptions: number };
+};
+
+export type AdminPlayer = {
+  /** Prénom normalisé : c'est l'identité d'un joueur, faute de comptes. */
+  nameKey: string;
+  name: string;
+  answers: number;
+  counts: Counts;
+  lastAnswerAt: string;
+  lastMatchDate: string;
+};
+
+export type AdminSubscriptions = {
+  enabled: boolean;
+  subscriptions: { id: string; host: string; tail: string; createdAt: string }[];
+};
+
+export type AdminTickResult = {
+  reminders: { publicToken: string; message: string }[];
+  closed: { eventId: string; venue: string | null }[];
+};
