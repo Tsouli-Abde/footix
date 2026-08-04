@@ -1,11 +1,7 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { ToastHost } from '../notifications/ToastHost';
-
-const navClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-    isActive ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100'
-  }`;
+import { NavMenu } from './NavMenu';
 
 export function Layout() {
   return (
@@ -16,15 +12,11 @@ export function Layout() {
             <img src="/favicon.svg" alt="" className="h-7 w-7" />
             Footix
           </Link>
-          <nav className="flex items-center gap-1">
-            <NavLink to="/" end className={navClass}>
-              En cours
-            </NavLink>
-            <NavLink to="/nouveau" className={navClass}>
-              Nouveau
-            </NavLink>
-          </nav>
+
+          {/* La cloche reste hors du menu, à droite : une notification qu'il faut
+              déplier pour voir n'attire pas l'œil. */}
           <NotificationBell />
+          <NavMenu />
         </div>
       </header>
 
