@@ -11,7 +11,6 @@ export type Outlook = 'vide' | 'insuffisant' | 'incertain' | 'ok' | 'foule';
 export type Venue = {
   id: string;
   label: string;
-  note: string;
 };
 
 export type ProposalStatus = 'ok' | 'juste' | 'trop_petit' | 'insuffisant';
@@ -49,8 +48,6 @@ export type FootixEvent = {
   counts: Counts;
   recommendation: { venue: Venue | null; outlook: Outlook; reason: string; proposals: Proposal[] };
   chosenVenue: Venue | null;
-  score: string | null;
-  resultNote: string | null;
   participants: Participant[];
   /** Présents uniquement sur la vue organisateur. */
   organizerToken?: string;
@@ -68,12 +65,11 @@ export type EventSummary = {
   counts: Counts;
   participantCount: number;
   chosenVenue: Venue | null;
-  score: string | null;
   /** Présent seulement quand la liste vient de la gestion d'un rendez-vous hebdo. */
   organizerToken?: string;
 };
 
-export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'score', 'annulation'] as const;
+export const ACTIVITY_TYPES = ['vote_ouvert', 'reponse', 'rappel', 'cloture', 'annulation'] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export type Activity = {

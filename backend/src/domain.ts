@@ -9,7 +9,7 @@ import { randomBytes } from 'node:crypto';
  * - `non` : ne vient pas
  *
  * `si_sceaux` n'est pas une nuance de disponibilité mais une condition sur le
- * lieu : c'est ce qui permet au parc de l'emporter alors que le Five ne
+ * lieu : c'est ce qui permet au parc de l'emporter alors que le speedsoccer ne
  * réunirait pas assez de monde.
  */
 export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'si_sceaux', 'non'] as const;
@@ -28,13 +28,11 @@ export type EventType = (typeof EVENT_TYPES)[number];
 export const VENUES = {
   five: {
     id: 'five',
-    label: 'Le Five',
-    note: 'Terrain synthétique, 5 ou 6 contre 6.',
+    label: 'Speedsoccer (five)',
   },
   sceaux: {
     id: 'sceaux',
     label: 'Parc de Sceaux',
-    note: 'Grand terrain en herbe.',
   },
 } as const;
 
@@ -45,7 +43,7 @@ export const isVenueId = (value: string): value is VenueId => value in VENUES;
 /** En dessous, ça ne vaut pas le coup de réserver. */
 export const MIN_PLAYERS = 6;
 
-/** À partir de ce nombre de joueurs sûrs, le Five devient trop petit. */
+/** À partir de ce nombre de joueurs sûrs, le speedsoccer devient trop petit. */
 export const SCEAUX_THRESHOLD = 12;
 
 /// Au delà, même le parc devient ingérable : il vaut mieux prévenir.
@@ -70,7 +68,7 @@ export type Outlook = 'vide' | 'insuffisant' | 'incertain' | 'ok' | 'foule';
  *
  * - `ok` : assez de monde sûr, on peut y aller
  * - `juste` : ça ne passe que si les « si besoin » confirment
- * - `trop_petit` : jouable, mais on y serait trop nombreux (le Five)
+ * - `trop_petit` : jouable, mais on y serait trop nombreux (le speedsoccer)
  * - `insuffisant` : même en comptant les « si besoin », pas assez de monde
  */
 export const PROPOSAL_STATUSES = ['ok', 'juste', 'trop_petit', 'insuffisant'] as const;
@@ -105,7 +103,7 @@ const tally = (sure: number, maybe: number) => {
 };
 
 /**
- * Ordre de préférence à égalité de joueurs : le Five est le lieu par défaut,
+ * Ordre de préférence à égalité de joueurs : le speedsoccer est le lieu par défaut,
  * c'est un terrain réservé. Cette liste est aussi l'ordre d'évaluation, ce qui
  * rend le résultat entièrement déterministe.
  */
@@ -139,9 +137,9 @@ function proposalFor(counts: Counts, venueId: VenueId): Proposal {
  * Choix du lieu à partir des réponses.
  *
  * Déterministe et sans pondération obscure : on chiffre les deux terrains, puis
- * on les classe toujours selon les mêmes critères, dans cet ordre — l'état du
- * lieu d'abord, le nombre de joueurs sûrs ensuite, le maximum atteignable, et
- * le Five en dernier recours pour départager. Deux mêmes séries de réponses
+ * on les classe toujours selon les mêmes critères, dans cet ordre : l'état du
+ * lieu d'abord, le nombre de joueurs sûrs ensuite, le maximum atteignable, et le
+ * speedsoccer en dernier recours pour départager. Deux mêmes séries de réponses
  * donnent donc toujours la même proposition.
  *
  * Les deux propositions sont renvoyées, pas seulement la gagnante :

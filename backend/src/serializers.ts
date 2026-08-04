@@ -31,7 +31,7 @@ function countAnswers(event: EventWithParticipants): Counts {
 const venuePayload = (venueId: string | null) => {
   if (!venueId || !isVenueId(venueId)) return null;
   const venue = VENUES[venueId];
-  return { id: venue.id, label: venue.label, note: venue.note };
+  return { id: venue.id, label: venue.label };
 };
 
 /**
@@ -69,8 +69,6 @@ export function serializeEvent(event: EventWithParticipants) {
       })),
     },
     chosenVenue: venuePayload(event.chosenVenue),
-    score: event.score,
-    resultNote: event.resultNote,
     participants: event.participants.map((participant) => ({
       id: participant.id,
       name: participant.name,
@@ -86,11 +84,7 @@ export function serializeEventForOrganizer(event: EventWithParticipants) {
     ...serializeEvent(event),
     organizerToken: event.organizerToken,
     /** Les lieux proposés à la clôture. */
-    venues: Object.values(VENUES).map((venue) => ({
-      id: venue.id,
-      label: venue.label,
-      note: venue.note,
-    })),
+    venues: Object.values(VENUES).map((venue) => ({ id: venue.id, label: venue.label })),
   };
 }
 
@@ -109,7 +103,6 @@ export function serializeEventSummary(event: EventWithParticipants) {
     counts,
     participantCount: event.participants.length,
     chosenVenue: venuePayload(event.chosenVenue),
-    score: event.score,
   };
 }
 

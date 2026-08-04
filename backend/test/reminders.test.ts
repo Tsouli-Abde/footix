@@ -46,7 +46,7 @@ describe('récapitulatif de la veille', () => {
 
     const result = await sendDueReminders(shortlyBefore(event.matchDate));
     expect(result.sent).toHaveLength(1);
-    expect(result.sent[0].message).toContain('Le Five');
+    expect(result.sent[0].message).toContain('Speedsoccer');
   });
 
   it('annonce le parc quand des joueurs n’y viennent que là', async () => {

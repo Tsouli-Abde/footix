@@ -77,7 +77,6 @@ export function VenueCard({ event }: { event: FootixEvent }) {
       <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4">
         <p className="text-sm font-medium text-green-700">On joue à</p>
         <p className="text-xl font-bold text-green-900 sm:text-2xl">{venue.label}</p>
-        <p className="mt-1 text-sm text-green-800">{venue.note}</p>
       </div>
     );
   }

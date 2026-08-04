@@ -96,7 +96,7 @@ describe('recommendVenue avec des « si au parc »', () => {
   });
 
   it('fait basculer au parc quand ils y font la différence', () => {
-    // Le Five réunit 8 joueurs et tiendrait, mais le parc en réunit 13.
+    // Le speedsoccer réunit 8 joueurs et tiendrait, mais le parc en réunit 13.
     const result = recommendVenue(counts(8, 0, 5));
     expect(result.venueId).toBe('sceaux');
     expect(result.reason).toBe('13 joueurs sûrs.');
