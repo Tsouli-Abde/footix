@@ -16,7 +16,7 @@ export const eventInclude = {
 
 export type EventWithParticipants = Prisma.EventGetPayload<{ include: typeof eventInclude }>;
 
-const emptyCounts = (): Counts => ({ oui: 0, si_besoin: 0, non: 0 });
+const emptyCounts = (): Counts => ({ oui: 0, si_besoin: 0, si_sceaux: 0, non: 0 });
 
 function countAnswers(event: EventWithParticipants): Counts {
   const counts = emptyCounts();
@@ -60,6 +60,14 @@ export function serializeEvent(event: EventWithParticipants) {
       venue: venuePayload(recommendation.venueId),
       outlook: recommendation.outlook,
       reason: recommendation.reason,
+      // Les deux terrains chiffrés, le conseillé en premier : l'organisateur
+      // voit ce que l'autre donnerait sans avoir à refaire le calcul.
+      proposals: recommendation.proposals.map((proposal) => ({
+        venue: venuePayload(proposal.venueId),
+        sure: proposal.sure,
+        possible: proposal.possible,
+        status: proposal.status,
+      })),
     },
     chosenVenue: venuePayload(event.chosenVenue),
     score: event.score,

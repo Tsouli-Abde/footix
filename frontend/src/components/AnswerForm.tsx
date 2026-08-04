@@ -90,7 +90,7 @@ export function AnswerForm({ event, onAnswered }: Props) {
           className={`${inputClass} sm:max-w-xs`}
         />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {AVAILABILITY_VALUES.map((value) => {
             const selected = availability === value;
             const styles = AVAILABILITY_BUTTON[value];

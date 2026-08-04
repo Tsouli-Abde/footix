@@ -49,6 +49,7 @@ const eventLabel = (event: EventLike) => event.title ?? `Foot du ${formatMatchDa
 const AVAILABILITY_WORDS: Record<Availability, string> = {
   oui: 'vient',
   si_besoin: 'vient si besoin',
+  si_sceaux: 'vient si c’est au parc',
   non: 'ne vient pas',
 };
 

@@ -84,6 +84,39 @@ describe('homonymes', () => {
   });
 });
 
+describe('réponse « si au parc »', () => {
+  it('est acceptée et comptée à part', async () => {
+    const event = await openEvent();
+    const res = await request
+      .post(`/api/events/${event.publicToken}/answers`)
+      .send({ name: 'Nadia', availability: 'si_sceaux' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.event.counts.si_sceaux).toBe(1);
+    expect(res.body.event.counts.oui).toBe(0);
+  });
+
+  it('ne compte que pour le parc dans les propositions', async () => {
+    const event = await openEvent();
+    const answer = (name: string, availability: string) =>
+      request.post(`/api/events/${event.publicToken}/answers`).send({ name, availability });
+
+    for (let i = 0; i < 6; i++) await answer(`Joueur${i}`, 'oui');
+    let last;
+    for (let i = 0; i < 4; i++) last = await answer(`Parc${i}`, 'si_sceaux');
+
+    const { proposals, venue } = last!.body.event.recommendation;
+    const five = proposals.find((p: { venue: { id: string } }) => p.venue.id === 'five');
+    const sceaux = proposals.find((p: { venue: { id: string } }) => p.venue.id === 'sceaux');
+
+    expect(five.sure).toBe(6);
+    expect(sceaux.sure).toBe(10);
+    // Le parc réunit plus de monde, c'est donc lui qui est conseillé.
+    expect(venue.id).toBe('sceaux');
+    expect(proposals[0].venue.id).toBe('sceaux');
+  });
+});
+
 describe('recommandation selon les réponses', () => {
   it('passe de "il manque du monde" au Five puis au Parc de Sceaux', async () => {
     const event = await openEvent();

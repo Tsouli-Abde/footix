@@ -5,6 +5,7 @@ import { CloseIcon } from './icons';
 const COLUMN_STYLES: Record<Availability, { header: string; chip: string }> = {
   oui: { header: 'text-green-700', chip: 'bg-green-50 text-green-800 ring-green-200' },
   si_besoin: { header: 'text-amber-700', chip: 'bg-amber-50 text-amber-800 ring-amber-200' },
+  si_sceaux: { header: 'text-sky-700', chip: 'bg-sky-50 text-sky-800 ring-sky-200' },
   non: { header: 'text-slate-500', chip: 'bg-slate-50 text-slate-600 ring-slate-200' },
 };
 
@@ -13,7 +14,7 @@ type Props = {
   onRemove?: (participantId: string) => void;
 };
 
-/** Qui vient, en trois colonnes. */
+/** Qui vient, une colonne par réponse. */
 export function AnswerList({ event, onRemove }: Props) {
   if (event.participants.length === 0) {
     return (
@@ -24,7 +25,7 @@ export function AnswerList({ event, onRemove }: Props) {
   }
 
   return (
-    <div className="grid gap-5 sm:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {AVAILABILITY_VALUES.map((value) => {
         const people = event.participants.filter((person) => person.availability === value);
         const styles = COLUMN_STYLES[value];

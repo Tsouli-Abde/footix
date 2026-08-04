@@ -1,7 +1,18 @@
 import { randomBytes } from 'node:crypto';
 
-/** Les trois réponses possibles, comme sur Doodle. */
-export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'non'] as const;
+/**
+ * Les réponses possibles, dans l'ordre où on les propose.
+ *
+ * - `oui` : vient, où que ce soit
+ * - `si_besoin` : vient s'il manque du monde, où que ce soit
+ * - `si_sceaux` : vient seulement si on joue au Parc de Sceaux
+ * - `non` : ne vient pas
+ *
+ * `si_sceaux` n'est pas une nuance de disponibilité mais une condition sur le
+ * lieu : c'est ce qui permet au parc de l'emporter alors que le Five ne
+ * réunirait pas assez de monde.
+ */
+export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'si_sceaux', 'non'] as const;
 export type Availability = (typeof AVAILABILITY_VALUES)[number];
 
 export const EVENT_STATUSES = ['ouvert', 'cloture'] as const;
@@ -54,11 +65,34 @@ export type Counts = Record<Availability, number>;
  */
 export type Outlook = 'vide' | 'insuffisant' | 'incertain' | 'ok' | 'foule';
 
+/**
+ * L'état d'un lieu au vu des réponses.
+ *
+ * - `ok` : assez de monde sûr, on peut y aller
+ * - `juste` : ça ne passe que si les « si besoin » confirment
+ * - `trop_petit` : jouable, mais on y serait trop nombreux (le Five)
+ * - `insuffisant` : même en comptant les « si besoin », pas assez de monde
+ */
+export const PROPOSAL_STATUSES = ['ok', 'juste', 'trop_petit', 'insuffisant'] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
+
+/** Ce que donnerait un lieu donné : combien de joueurs, et dans quel état. */
+export type Proposal = {
+  venueId: VenueId;
+  /** Joueurs certains de venir sur ce terrain. */
+  sure: number;
+  /** Le maximum atteignable si tous les « si besoin » confirment. */
+  possible: number;
+  status: ProposalStatus;
+};
+
 export type Recommendation = {
   venueId: VenueId | null;
   outlook: Outlook;
   /** Une phrase courte qui explique le choix, affichée telle quelle. */
   reason: string;
+  /** Les deux lieux chiffrés, le retenu en premier. */
+  proposals: Proposal[];
 };
 
 /** « 1 joueur », « 3 joueurs ». */
@@ -71,46 +105,82 @@ const tally = (sure: number, maybe: number) => {
 };
 
 /**
- * Choix du lieu à partir du nombre de réponses.
+ * Ordre de préférence à égalité de joueurs : le Five est le lieu par défaut,
+ * c'est un terrain réservé. Cette liste est aussi l'ordre d'évaluation, ce qui
+ * rend le résultat entièrement déterministe.
+ */
+const VENUE_ORDER: readonly VenueId[] = ['five', 'sceaux'];
+
+const STATUS_RANK: Record<ProposalStatus, number> = { ok: 0, juste: 1, trop_petit: 2, insuffisant: 3 };
+
+/**
+ * Ce que réunit un lieu.
  *
- * Volontairement bête et lisible : deux seuils, pas de pondération obscure.
- * Les "si besoin" ne comptent jamais comme des présents, ils servent seulement
- * à atteindre le minimum de joueurs.
+ * `si_besoin` vient partout, `si_sceaux` uniquement au parc : c'est toute la
+ * différence entre les deux terrains.
+ */
+function proposalFor(counts: Counts, venueId: VenueId): Proposal {
+  const sure = venueId === 'sceaux' ? counts.oui + counts.si_sceaux : counts.oui;
+  const possible = sure + counts.si_besoin;
+
+  const status: ProposalStatus =
+    possible < MIN_PLAYERS
+      ? 'insuffisant'
+      : sure < MIN_PLAYERS
+        ? 'juste'
+        : venueId === 'five' && sure >= SCEAUX_THRESHOLD
+          ? 'trop_petit'
+          : 'ok';
+
+  return { venueId, sure, possible, status };
+}
+
+/**
+ * Choix du lieu à partir des réponses.
+ *
+ * Déterministe et sans pondération obscure : on chiffre les deux terrains, puis
+ * on les classe toujours selon les mêmes critères, dans cet ordre — l'état du
+ * lieu d'abord, le nombre de joueurs sûrs ensuite, le maximum atteignable, et
+ * le Five en dernier recours pour départager. Deux mêmes séries de réponses
+ * donnent donc toujours la même proposition.
+ *
+ * Les deux propositions sont renvoyées, pas seulement la gagnante :
+ * l'organisateur voit ce que l'autre terrain donnerait avant de trancher.
  */
 export function recommendVenue(counts: Counts): Recommendation {
-  const sure = counts.oui;
-  const maybe = counts.si_besoin;
-  const potential = sure + maybe;
+  const proposals = VENUE_ORDER.map((venueId) => proposalFor(counts, venueId)).sort(
+    (a, b) =>
+      STATUS_RANK[a.status] - STATUS_RANK[b.status] ||
+      b.sure - a.sure ||
+      b.possible - a.possible ||
+      VENUE_ORDER.indexOf(a.venueId) - VENUE_ORDER.indexOf(b.venueId),
+  );
 
-  if (sure === 0 && maybe === 0) {
+  const best = proposals[0];
+  const answered = counts.oui + counts.si_besoin + counts.si_sceaux;
+
+  if (answered === 0) {
     return {
       venueId: null,
       outlook: 'vide',
       reason: counts.non > 0 ? 'Personne de dispo.' : 'Personne n’a encore répondu.',
+      proposals,
     };
   }
 
-  if (potential < MIN_PLAYERS) {
+  if (best.status === 'insuffisant') {
     return {
       venueId: null,
       outlook: 'insuffisant',
-      reason: `${players(potential)}, il en faut ${MIN_PLAYERS}.`,
+      reason: `${players(best.possible)}, il en faut ${MIN_PLAYERS}.`,
+      proposals,
     };
   }
 
-  if (sure >= CROWD_THRESHOLD) {
-    return { venueId: 'sceaux', outlook: 'foule', reason: tally(sure, maybe) };
-  }
+  const outlook: Outlook =
+    best.status === 'juste' ? 'incertain' : best.sure >= CROWD_THRESHOLD ? 'foule' : 'ok';
 
-  if (sure >= SCEAUX_THRESHOLD) {
-    return { venueId: 'sceaux', outlook: 'ok', reason: tally(sure, maybe) };
-  }
-
-  if (sure < MIN_PLAYERS) {
-    return { venueId: 'five', outlook: 'incertain', reason: tally(sure, maybe) };
-  }
-
-  return { venueId: 'five', outlook: 'ok', reason: tally(sure, maybe) };
+  return { venueId: best.venueId, outlook, reason: tally(best.sure, counts.si_besoin), proposals };
 }
 
 /** L'heure par défaut, celle de la pause déj. */

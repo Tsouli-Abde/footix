@@ -150,12 +150,18 @@ function CloseCard({ event, onClose }: { event: FootixEvent; onClose: (venueId: 
         <Field label="On joue où">
           <select value={choice} onChange={(e) => setChoice(e.target.value)} className={`${inputClass} sm:w-80`}>
             <option value="">Nulle part, match annulé</option>
-            {event.venues?.map((venue) => (
-              <option key={venue.id} value={venue.id}>
-                {venue.label}
-                {venue.id === suggested ? ' (conseillé)' : ''}
-              </option>
-            ))}
+            {event.venues?.map((venue) => {
+              // L'effectif du terrain vient du serveur : il diffère d'un lieu à
+              // l'autre dès que quelqu'un a répondu « si au parc ».
+              const proposal = event.recommendation.proposals.find((item) => item.venue?.id === venue.id);
+              return (
+                <option key={venue.id} value={venue.id}>
+                  {venue.label}
+                  {proposal ? ` — ${proposal.sure} joueur${proposal.sure > 1 ? 's' : ''}` : ''}
+                  {venue.id === suggested ? ' (conseillé)' : ''}
+                </option>
+              );
+            })}
           </select>
         </Field>
         <Button onClick={() => onClose(choice || null)}>Clôturer</Button>

@@ -11,7 +11,16 @@ import {
   type Counts,
 } from '../src/domain.js';
 
-const counts = (oui: number, si_besoin = 0, non = 0): Counts => ({ oui, si_besoin, non });
+const counts = (oui: number, si_besoin = 0, si_sceaux = 0, non = 0): Counts => ({
+  oui,
+  si_besoin,
+  si_sceaux,
+  non,
+});
+
+/** Raccourci : la proposition chiffrée pour un terrain donné. */
+const proposal = (result: ReturnType<typeof recommendVenue>, venueId: 'five' | 'sceaux') =>
+  result.proposals.find((item) => item.venueId === venueId)!;
 
 describe('recommendVenue', () => {
   it('ne propose rien tant qu\'on est trop peu', () => {
@@ -56,11 +65,11 @@ describe('recommendVenue', () => {
   });
 
   it('distingue personne n’a répondu de personne n’est dispo', () => {
-    const vierge = recommendVenue(counts(0, 0, 0));
+    const vierge = recommendVenue(counts(0, 0, 0, 0));
     expect(vierge.outlook).toBe('vide');
     expect(vierge.reason).toContain('encore répondu');
 
-    const tousNon = recommendVenue(counts(0, 0, 5));
+    const tousNon = recommendVenue(counts(0, 0, 0, 5));
     expect(tousNon.outlook).toBe('vide');
     expect(tousNon.reason).toContain('dispo');
   });
@@ -75,6 +84,73 @@ describe('recommendVenue', () => {
     expect(recommendVenue(counts(1, 0)).reason).toBe(`1 joueur, il en faut ${MIN_PLAYERS}.`);
     expect(recommendVenue(counts(1, 5)).reason).toBe('1 joueur sûr, 5 si besoin.');
     expect(recommendVenue(counts(8, 0)).reason).toBe('8 joueurs sûrs.');
+  });
+});
+
+describe('recommendVenue avec des « si au parc »', () => {
+  it('ne compte jamais les « si au parc » pour le Five', () => {
+    const result = recommendVenue(counts(5, 0, 10));
+    expect(proposal(result, 'five').sure).toBe(5);
+    expect(proposal(result, 'sceaux').sure).toBe(15);
+  });
+
+  it('fait basculer au parc quand ils y font la différence', () => {
+    // Le Five réunit 8 joueurs et tiendrait, mais le parc en réunit 13.
+    const result = recommendVenue(counts(8, 0, 5));
+    expect(result.venueId).toBe('sceaux');
+    expect(result.reason).toBe('13 joueurs sûrs.');
+  });
+
+  it('sauve un match que le Five ne permettrait pas', () => {
+    // 3 sûrs seulement : trop peu au Five, mais 7 au parc.
+    const result = recommendVenue(counts(3, 0, 4));
+    expect(result.venueId).toBe('sceaux');
+    expect(result.outlook).toBe('ok');
+    expect(proposal(result, 'five').status).toBe('insuffisant');
+  });
+
+  it('reste au Five quand personne ne pose de condition de lieu', () => {
+    const result = recommendVenue(counts(8, 2));
+    expect(result.venueId).toBe('five');
+    expect(proposal(result, 'five').sure).toBe(proposal(result, 'sceaux').sure);
+  });
+
+  it('additionne les « si besoin » aux deux terrains', () => {
+    const result = recommendVenue(counts(4, 3, 2));
+    expect(proposal(result, 'five').possible).toBe(7);
+    expect(proposal(result, 'sceaux').possible).toBe(9);
+  });
+
+  it('marque le Five trop petit au-delà du seuil, sans jamais le retenir', () => {
+    const result = recommendVenue(counts(SCEAUX_THRESHOLD, 0));
+    expect(proposal(result, 'five').status).toBe('trop_petit');
+    expect(result.venueId).toBe('sceaux');
+  });
+});
+
+describe('recommendVenue est déterministe', () => {
+  it('renvoie toujours les deux terrains, le retenu en premier', () => {
+    for (let oui = 0; oui <= 15; oui++) {
+      for (let sceaux = 0; sceaux <= 4; sceaux++) {
+        const result = recommendVenue(counts(oui, 2, sceaux));
+        expect(result.proposals).toHaveLength(2);
+        expect(result.proposals.map((item) => item.venueId).sort()).toEqual(['five', 'sceaux']);
+        // La proposition retenue est bien la première du classement.
+        if (result.venueId) expect(result.proposals[0].venueId).toBe(result.venueId);
+      }
+    }
+  });
+
+  it('donne le même résultat pour les mêmes réponses', () => {
+    for (let oui = 0; oui <= 20; oui++) {
+      const input = counts(oui, 3, 2, 1);
+      expect(recommendVenue(input)).toEqual(recommendVenue(input));
+    }
+  });
+
+  it('départage en faveur du Five à effectif égal', () => {
+    const result = recommendVenue(counts(10, 1));
+    expect(result.venueId).toBe('five');
   });
 });
 

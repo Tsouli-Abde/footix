@@ -8,22 +8,46 @@ des liens.
 
 ## Le principe
 
-On ne vote pas sur des lieux, on dit juste **Oui / Si besoin / Non**. Le lieu se déduit du
-nombre de personnes, parce que c'est comme ça que ça se passe en vrai : on demande "foot
-vendredi ?", et une fois qu'on sait combien on est, on sait où aller.
+On ne vote pas sur des lieux, on dit juste si on vient. Le lieu se déduit des réponses, parce
+que c'est comme ça que ça se passe en vrai : on demande "foot vendredi ?", et une fois qu'on
+sait qui vient, on sait où aller.
 
-Les deux terrains sont en dur dans le code (`backend/src/domain.ts`) :
+Quatre réponses possibles :
 
-| Présents | Où on joue |
+| Réponse | Ce que ça veut dire |
 | --- | --- |
-| moins de 6 | nulle part, ça ne vaut pas le coup |
-| 6 à 11 | Le Five |
-| 12 et plus | Parc de Sceaux |
+| **Oui** | je viens, où que ce soit |
+| **Si besoin** | je viens s'il manque du monde, où que ce soit |
+| **Si au parc** | je viens seulement si on joue au Parc de Sceaux |
+| **Non** | je ne viens pas |
 
-Les "si besoin" ne comptent jamais comme des présents. Ils servent seulement à signaler
-qu'on pourrait basculer au parc s'ils se confirment. L'app conseille, l'organisateur tranche
-au moment de clôturer : il valide le lieu proposé, prend l'autre, ou clôture sans lieu si le
-match tombe à l'eau.
+Les deux terrains sont en dur dans le code (`backend/src/domain.ts`) : **Le Five** (synthétique,
+5 ou 6 contre 6) et le **Parc de Sceaux** (grand terrain en herbe). Il faut au moins **6**
+joueurs pour que ça vaille le coup, et au-delà de **12** le Five devient trop petit.
+
+### Comment le lieu est choisi
+
+L'app chiffre les deux terrains, puis les classe. C'est entièrement déterministe : les mêmes
+réponses donnent toujours la même proposition.
+
+Pour chaque terrain, deux nombres :
+
+- les **joueurs sûrs** : les *Oui*, plus les *Si au parc* quand il s'agit du parc ;
+- le **maximum atteignable** : les joueurs sûrs plus les *Si besoin*, qui viennent partout.
+
+Chaque terrain reçoit alors un état — `ok` (assez de monde sûr), `juste` (ça ne passe que si
+les *Si besoin* confirment), `trop_petit` (le Five au-delà de 12), `insuffisant` (pas assez de
+monde même au mieux) — et le classement départage dans cet ordre : l'état d'abord, le nombre
+de joueurs sûrs ensuite, le maximum atteignable, et le Five en dernier recours à égalité
+parfaite (c'est le terrain par défaut, il se réserve).
+
+C'est ce qui donne tout son sens au *Si au parc* : quatre personnes qui ne viennent qu'au parc
+peuvent faire basculer un match de 6 joueurs au Five vers 10 joueurs à Sceaux, ou sauver un
+match que le Five n'aurait pas permis.
+
+Les **deux** propositions chiffrées sont renvoyées par l'API, pas seulement la gagnante :
+l'organisateur voit ce que l'autre terrain donnerait avant de trancher. L'app conseille, il
+valide le lieu proposé, prend l'autre, ou clôture sans lieu si le match tombe à l'eau.
 
 L'heure est facultative : par défaut on joue sur la pause déj et l'app ne l'affiche pas.
 L'organisateur peut en fixer une quand on sort du créneau habituel.
@@ -146,6 +170,7 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 | Personne n'a répondu | Message distinct de « personne n'est dispo », pour ne pas confondre silence et refus |
 | Trop peu de monde | On annonce le nombre de joueurs et le minimum, plutôt qu'un lieu |
 | Ça ne tient qu'aux indécis | Les « si besoin » sont comptés à part, la carte passe en orange |
+| Des joueurs ne viennent qu'au parc | Leur voix ne compte que pour Sceaux, ce qui peut faire basculer le lieu. Les deux terrains restent affichés, chiffrés |
 | Vraiment trop de monde | La carte reste verte, l'organisateur voit le total |
 | Match ou deadline déjà passés | Refusé à la création, la deadline est recalée si besoin |
 | Deux sondages le même jour | Contrainte en base, on renvoie vers celui qui existe |

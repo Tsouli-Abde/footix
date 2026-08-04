@@ -93,7 +93,8 @@ model Participant {
   /// Sert à retrouver quelqu'un qui revient changer sa réponse.
   nameKey String
 
-  /// "oui" | "si_besoin" | "non"
+  /// "oui" | "si_besoin" | "si_sceaux" | "non"
+  /// `si_sceaux` = ne vient que si on joue au Parc de Sceaux.
   availability String
 
   createdAt DateTime @default(now())

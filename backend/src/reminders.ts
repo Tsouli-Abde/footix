@@ -9,9 +9,9 @@ const HOUR_MS = 60 * 60 * 1000;
 const REMINDER_WINDOW_MS = 24 * HOUR_MS;
 
 function countAnswers(event: EventWithParticipants): Counts {
-  const counts: Counts = { oui: 0, si_besoin: 0, non: 0 };
+  const counts: Counts = { oui: 0, si_besoin: 0, si_sceaux: 0, non: 0 };
   for (const participant of event.participants) {
-    counts[participant.availability as Availability] += 1;
+    if (participant.availability in counts) counts[participant.availability as Availability] += 1;
   }
   return counts;
 }

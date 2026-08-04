@@ -1,6 +1,6 @@
 /** Miroir des réponses de l'API (backend/src/serializers.ts). */
 
-export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'non'] as const;
+export const AVAILABILITY_VALUES = ['oui', 'si_besoin', 'si_sceaux', 'non'] as const;
 export type Availability = (typeof AVAILABILITY_VALUES)[number];
 
 export type Counts = Record<Availability, number>;
@@ -12,6 +12,16 @@ export type Venue = {
   id: string;
   label: string;
   note: string;
+};
+
+export type ProposalStatus = 'ok' | 'juste' | 'trop_petit' | 'insuffisant';
+
+/** Ce que donnerait un terrain, chiffré par le serveur. */
+export type Proposal = {
+  venue: Venue | null;
+  sure: number;
+  possible: number;
+  status: ProposalStatus;
 };
 
 export type Participant = {
@@ -38,7 +48,7 @@ export type FootixEvent = {
   createdAt: string;
   publicToken: string;
   counts: Counts;
-  recommendation: { venue: Venue | null; outlook: Outlook; reason: string };
+  recommendation: { venue: Venue | null; outlook: Outlook; reason: string; proposals: Proposal[] };
   chosenVenue: Venue | null;
   score: string | null;
   resultNote: string | null;
