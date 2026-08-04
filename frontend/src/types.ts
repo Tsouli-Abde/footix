@@ -42,7 +42,6 @@ export type FootixEvent = {
   hasTime: boolean;
   /** Prénom de la personne qui a créé le sondage, si elle l'a donné. */
   organizerName: string | null;
-  voteDeadline: string;
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
   createdAt: string;
@@ -63,7 +62,6 @@ export type EventSummary = {
   title: string | null;
   matchDate: string;
   hasTime: boolean;
-  voteDeadline: string;
   status: 'ouvert' | 'cloture';
   votingOpen: boolean;
   publicToken: string;

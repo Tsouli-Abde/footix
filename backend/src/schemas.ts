@@ -14,28 +14,21 @@ const matchTime = z
   .nullable()
   .optional();
 
-export const createEventSchema = z
-  .object({
-    title: z.string().trim().max(120).nullable().optional(),
-    description: z.string().trim().max(500).nullable().optional(),
-    matchDate: z.coerce.date(),
-    /** Heure explicite. Absente, on garde midi sans l'afficher. */
-    matchTime,
-    /** Prénom du créateur, affiché comme organisateur. */
-    organizerName: z.string().trim().max(60).nullable().optional(),
-    voteDeadline: z.coerce.date().optional(),
-  })
-  .refine((data) => !data.voteDeadline || data.voteDeadline <= data.matchDate, {
-    message: 'La deadline doit tomber avant le match',
-    path: ['voteDeadline'],
-  });
+export const createEventSchema = z.object({
+  title: z.string().trim().max(120).nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+  matchDate: z.coerce.date(),
+  /** Heure explicite. Absente, on garde midi sans l'afficher. */
+  matchTime,
+  /** Prénom du créateur, affiché comme organisateur. */
+  organizerName: z.string().trim().max(60).nullable().optional(),
+});
 
 export const updateEventSchema = z.object({
   title: z.string().trim().max(120).nullable().optional(),
   description: z.string().trim().max(500).nullable().optional(),
   matchDate: z.coerce.date().optional(),
   matchTime,
-  voteDeadline: z.coerce.date().optional(),
 });
 
 export const closeEventSchema = z.object({

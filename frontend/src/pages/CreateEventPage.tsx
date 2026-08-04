@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { Alert, Button, Card, inputClass } from '../components/ui';
-import { defaultDeadlineFor, formatMatchDate, toDateInput, toDateTimeLocal, upcomingFridays } from '../lib/dates';
+import { formatMatchDate, toDateInput, upcomingFridays } from '../lib/dates';
 import { rememberName, rememberedName } from '../lib/names';
 import type { EventSummary } from '../types';
 
@@ -17,7 +17,6 @@ export function CreateEventPage() {
 
   const [title, setTitle] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
-  const [deadline, setDeadline] = useState<string | null>(null);
   /** Heure explicite. Null tant qu'on garde le créneau de midi. */
   const [time, setTime] = useState<string | null>(null);
   const [organizerName, setOrganizerName] = useState(rememberedName);
@@ -39,7 +38,6 @@ export function CreateEventPage() {
         organizerName: organizerName.trim() || undefined,
         title: title?.trim() || undefined,
         description: description?.trim() || undefined,
-        voteDeadline: deadline ? new Date(deadline).toISOString() : undefined,
       });
       if (organizerName.trim()) rememberName(organizerName.trim());
       navigate(`/manage/${created.organizerToken}`, { replace: true });
@@ -169,20 +167,6 @@ export function CreateEventPage() {
           </OptionalField>
         )}
 
-        {deadline === null ? (
-          <OptionalButton onClick={() => setDeadline(toDateTimeLocal(defaultDeadlineFor(matchDate)))}>
-            + Changer la deadline
-          </OptionalButton>
-        ) : (
-          <OptionalField label="Fin des réponses" onRemove={() => setDeadline(null)}>
-            <input
-              type="datetime-local"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className={`${inputClass} sm:max-w-xs`}
-            />
-          </OptionalField>
-        )}
       </div>
 
       {error && <Alert>{error}</Alert>}

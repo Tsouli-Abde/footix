@@ -1,4 +1,4 @@
-import { eventTitle, formatCountdown, formatDeadlineDate, formatMatchSlot } from '../lib/dates';
+import { eventTitle, formatCountdown, formatMatchSlot } from '../lib/dates';
 import type { FootixEvent } from '../types';
 import { Badge } from './ui';
 
@@ -16,7 +16,7 @@ export function EventHeader({ event }: { event: FootixEvent }) {
         ) : event.votingOpen ? (
           <Badge className="bg-green-100 text-green-800">Ouvert</Badge>
         ) : (
-          <Badge className="bg-amber-100 text-amber-800">Deadline passée</Badge>
+          <Badge className="bg-amber-100 text-amber-800">Match passé</Badge>
         )}
       </div>
 
@@ -24,8 +24,7 @@ export function EventHeader({ event }: { event: FootixEvent }) {
       {event.description && <p className="mt-2 text-sm text-slate-600">{event.description}</p>}
 
       <p className="mt-2 text-sm text-slate-500">
-        Réponses jusqu’à {formatDeadlineDate(event.voteDeadline).toLowerCase()}
-        {event.votingOpen && <span className="text-slate-400"> ({formatCountdown(event.voteDeadline)})</span>}
+        {event.votingOpen ? `Réponses ouvertes, coup d’envoi ${formatCountdown(event.matchDate)}` : 'Réponses closes'}
       </p>
 
       {event.organizerName && (

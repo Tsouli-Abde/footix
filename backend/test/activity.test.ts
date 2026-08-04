@@ -9,8 +9,23 @@ const request = supertest(createApp());
 beforeEach(resetDb);
 afterAll(() => prisma.$disconnect());
 
+/**
+ * Les routes annoncent sans attendre (`void announceVoteOpen(...)`) pour ne pas
+ * retarder leur réponse : l'écriture dans le fil peut donc atterrir après. Les
+ * tests qui datent un repère doivent attendre qu'elle soit là, sinon elle se
+ * range du mauvais côté.
+ */
+async function waitForActivity(type: string) {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    if (await prisma.activity.count({ where: { type } })) return;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`Aucune activité « ${type} » n'est arrivée dans le fil`);
+}
+
 async function openEvent() {
   const res = await request.post('/api/events').send({ matchDate: inDays(7) });
+  await waitForActivity('vote_ouvert');
   return res.body.event as { publicToken: string; organizerToken: string };
 }
 
@@ -48,6 +63,7 @@ describe('fil d\'activité', () => {
     const cutoff = new Date().toISOString();
     await new Promise((r) => setTimeout(r, 10));
     await request.post(`/api/events/${event.publicToken}/answers`).send({ name: 'Sarah', availability: 'non' });
+    await waitForActivity('reponse');
 
     const res = await request.get(`/api/activity?since=${encodeURIComponent(cutoff)}`);
     // Seule la réponse est postérieure au repère, pas l'ouverture.

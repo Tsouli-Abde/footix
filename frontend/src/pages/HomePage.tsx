@@ -50,7 +50,7 @@ export function HomePage() {
                   <div className="flex items-start justify-between gap-2">
                     <h2 className="font-semibold text-slate-900">{eventTitle(event)}</h2>
                     <Badge className={event.votingOpen ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}>
-                      {event.votingOpen ? 'Ouvert' : 'Deadline passée'}
+                      {event.votingOpen ? 'Ouvert' : 'Match passé'}
                     </Badge>
                   </div>
                   {(event.title || event.hasTime) && (
@@ -59,7 +59,7 @@ export function HomePage() {
                   <p className="mt-3 text-xs text-slate-500">
                     {event.counts.oui} présent{event.counts.oui > 1 ? 's' : ''}
                     {event.counts.si_besoin > 0 && `, ${event.counts.si_besoin} si besoin`} ·{' '}
-                    {event.votingOpen ? `réponses ${formatCountdown(event.voteDeadline)}` : 'réponses closes'}
+                    {event.votingOpen ? `coup d’envoi ${formatCountdown(event.matchDate)}` : 'réponses closes'}
                   </p>
                 </Card>
               </Link>

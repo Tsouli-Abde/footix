@@ -69,6 +69,8 @@ Autres partis pris, hérités de l'usage réel :
 - **Les réponses sont visibles par tous, en direct.** La page se rafraîchit toutes les 7
   secondes, largement suffisant pour une trentaine de personnes.
 - **Un seul sondage par jour.** Créer un doublon renvoie vers celui qui existe déjà.
+- **Pas de date de fin des réponses.** On répond jusqu'au coup d'envoi. Dans les faits les
+  gens répondent à la dernière minute, et une deadline la veille les excluait pour rien.
 - **Le prénom identifie la personne.** Ressaisir le même prénom (accents et casse
   indifférents) recharge sa réponse au lieu d'en créer une deuxième. L'appareil qui a répondu
   retient l'id de sa réponse : c'est ce qui permet de distinguer « je reviens changer d'avis »,
@@ -77,9 +79,9 @@ Autres partis pris, hérités de l'usage réel :
 Une fois le match joué, l'organisateur peut noter le **score**, visible ensuite par tout le
 monde.
 
-Si personne ne clôture, l'app le fait toute seule **trois heures avant le coup d'envoi**, en
-retenant le lieu qu'elle conseillait. C'est volontairement silencieux : c'est du ménage, pas
-une décision, ça ne mérite pas de notification.
+Si personne ne clôture, l'app le fait toute seule **une fois le coup d'envoi passé**, en
+retenant le lieu qu'elle conseillait. Aucune notification, aucune trace dans le fil : c'est du
+ménage, pas une décision.
 
 ## Lancer l'app sur sa machine
 
@@ -172,10 +174,10 @@ La vie d'un sondage n'est pas toujours propre, voici ce qui est prévu :
 | Ça ne tient qu'aux indécis | Les « si besoin » sont comptés à part, la carte passe en orange |
 | Des joueurs ne viennent qu'au parc | Leur voix ne compte que pour Sceaux, ce qui peut faire basculer le lieu. Les deux terrains restent affichés, chiffrés |
 | Vraiment trop de monde | La carte reste verte, l'organisateur voit le total |
-| Match ou deadline déjà passés | Refusé à la création, la deadline est recalée si besoin |
+| Match déjà passé | Refusé à la création |
 | Deux sondages le même jour | Contrainte en base, on renvoie vers celui qui existe |
-| Réponse après la deadline | Refusée, le sondage est en lecture seule |
-| Sondage jamais clôturé | Clôturé tout seul trois heures avant le match, sans notification |
+| Réponse après le coup d'envoi | Refusée, le sondage passe en lecture seule |
+| Sondage jamais clôturé | Clôturé tout seul une fois le match passé, sans notification |
 
 ## Notifications
 
@@ -332,5 +334,5 @@ Organisateur (`:organizerToken`) :
 ## Pistes pour la suite
 
 - Export ICS / Google / Outlook.
-- Rappel automatique sur Teams avant la deadline.
+- Rappel automatique sur Teams avant le match.
 - Statistiques d'assiduité, lieux les plus retenus, buteurs.

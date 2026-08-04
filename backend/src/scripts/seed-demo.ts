@@ -5,7 +5,7 @@
  * `npm run seed:demo`, additif et rejouable : les jours déjà occupés sont ignorés.
  */
 import { prisma } from '../db.js';
-import { atMatchHour, defaultDeadlineFor, generateToken, normalizeName, type Availability } from '../domain.js';
+import { atMatchHour, generateToken, normalizeName, type Availability } from '../domain.js';
 import { occurrenceKeyFor } from '../domain.js';
 
 const TEAM = [
@@ -56,7 +56,6 @@ async function createPastMatch({ date, present, maybe, venue, score, note }: Pas
       title: null, // sans titre, c'est la date qui sert d'intitulé
       matchDate,
       occurrenceKey,
-      voteDeadline: defaultDeadlineFor(matchDate),
       status: 'cloture',
       chosenVenue: venue,
       score,

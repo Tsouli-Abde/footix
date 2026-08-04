@@ -8,7 +8,7 @@ import { ResultCard } from '../components/ResultCard';
 import { VenueCard } from '../components/VenueCard';
 import { Alert, Button, Card, Field, inputClass, PageState } from '../components/ui';
 import { usePolledEvent } from '../hooks/usePolledEvent';
-import { formatMatchDate, toDateInput, toDateTimeLocal } from '../lib/dates';
+import { formatMatchDate, formatTimeInput, toDateInput } from '../lib/dates';
 import type { FootixEvent } from '../types';
 
 /** Vue organisateur : avoir le lien suffit à gérer le sondage, sans compte. */
@@ -176,13 +176,19 @@ function EditCard({
   onCancel,
 }: {
   event: FootixEvent;
-  onSave: (input: { title: string | null; description: string | null; matchDate: string; voteDeadline: string }) => void;
+  onSave: (input: {
+    title: string | null;
+    description: string | null;
+    matchDate: string;
+    matchTime: string | null;
+  }) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(event.title ?? '');
   const [description, setDescription] = useState(event.description ?? '');
   const [matchDate, setMatchDate] = useState(toDateInput(new Date(event.matchDate)));
-  const [voteDeadline, setVoteDeadline] = useState(toDateTimeLocal(new Date(event.voteDeadline)));
+  /** Vide = on garde le créneau de midi sans l'afficher. */
+  const [matchTime, setMatchTime] = useState(event.hasTime ? formatTimeInput(new Date(event.matchDate)) : '');
 
   return (
     <Card className="space-y-5">
@@ -212,13 +218,8 @@ function EditCard({
         <Field label="Jour du match">
           <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className={inputClass} />
         </Field>
-        <Field label="Fin des réponses">
-          <input
-            type="datetime-local"
-            value={voteDeadline}
-            onChange={(e) => setVoteDeadline(e.target.value)}
-            className={inputClass}
-          />
+        <Field label="Heure" hint="Vide = midi, l’heure habituelle.">
+          <input type="time" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} className={inputClass} />
         </Field>
       </div>
 
@@ -230,7 +231,7 @@ function EditCard({
               title: title.trim() || null,
               description: description.trim() || null,
               matchDate: new Date(year, month - 1, day, 12, 0, 0, 0).toISOString(),
-              voteDeadline: new Date(voteDeadline).toISOString(),
+              matchTime: matchTime || null,
             });
           }}
         >

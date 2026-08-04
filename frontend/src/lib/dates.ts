@@ -31,9 +31,6 @@ export function isTomorrowOrSooner(iso: string, now = Date.now()): boolean {
   return diff > 0 && diff <= 24 * 60 * 60 * 1000;
 }
 
-/** La deadline, elle, a besoin de son heure. */
-export const formatDeadlineDate = (iso: string) => capitalizeFirst(dayAndTime.format(new Date(iso)));
-
 export const formatShortDate = (iso: string) => shortDate.format(new Date(iso));
 
 export const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -57,10 +54,10 @@ export function toDateInput(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** Valeur d'un `<input type="datetime-local">`, sans fuseau. */
-export function toDateTimeLocal(date: Date): string {
+/** Valeur d'un `<input type="time">`, qui attend HH:MM. */
+export function formatTimeInput(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${toDateInput(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /** Les prochains vendredis, pour proposer une date en un clic. */
@@ -77,10 +74,3 @@ export function upcomingFridays(count = 3, from = new Date()): Date[] {
   });
 }
 
-/** Par défaut les réponses ferment la veille à 18h, comme côté serveur. */
-export function defaultDeadlineFor(matchDate: Date): Date {
-  const deadline = new Date(matchDate);
-  deadline.setDate(deadline.getDate() - 1);
-  deadline.setHours(18, 0, 0, 0);
-  return deadline;
-}

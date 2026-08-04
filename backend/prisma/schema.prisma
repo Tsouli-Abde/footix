@@ -15,8 +15,8 @@ datasource db {
 
 /// Un sondage "foot vendredi ?" pour une date donnée.
 ///
-/// Il n'y a plus d'options à voter : chacun dit juste s'il est dispo, et le lieu
-/// se déduit du nombre de présents (cf. recommendVenue dans src/domain.ts).
+/// Il n'y a pas d'options à voter : chacun dit juste s'il vient, et le lieu se
+/// déduit des réponses (cf. recommendVenue dans src/domain.ts).
 model Event {
   id String @id @default(cuid())
 
@@ -44,10 +44,11 @@ model Event {
   /// Unique : c'est la garantie anti-doublon (un seul sondage par jour).
   occurrenceKey String @unique
 
-  /// Fin des réponses.
-  voteDeadline DateTime
-
   /// "ouvert" | "cloture"
+  ///
+  /// Il n'y a pas de date de fin des réponses : on répond jusqu'au coup d'envoi,
+  /// et le job horaire clôture en silence les sondages dont le match est passé
+  /// (cf. autoCloseDueEvents dans src/reminders.ts).
   status String @default("ouvert")
 
   /// Lieu retenu à la clôture ("five" | "sceaux").

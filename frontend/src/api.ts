@@ -38,7 +38,6 @@ export type CreateEventInput = {
   organizerName?: string | null;
   title?: string | null;
   description?: string | null;
-  voteDeadline?: string;
 };
 
 export const api = {

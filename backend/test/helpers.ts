@@ -11,6 +11,21 @@ export function inDays(days: number): string {
   return date.toISOString();
 }
 
+/**
+ * Un match tout proche : le jour et l'heure d'un coup d'envoi dans une heure.
+ *
+ * Les deux vont ensemble, parce qu'« dans une heure » à 23 h 30 tombe le
+ * lendemain : le jour doit suivre l'heure.
+ */
+export function inOneHour(): { matchDate: string; matchTime: string } {
+  const date = new Date(Date.now() + 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    matchDate: date.toISOString(),
+    matchTime: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  };
+}
+
 /** Vide les tables entre deux tests. L'ordre respecte les clés étrangères. */
 export async function resetDb() {
   await prisma.participant.deleteMany();

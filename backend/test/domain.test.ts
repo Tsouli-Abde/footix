@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   atMatchHour,
-  defaultDeadlineFor,
   isVotingOpen,
   MIN_PLAYERS,
   normalizeName,
   occurrenceKeyFor,
   recommendVenue,
   SCEAUX_THRESHOLD,
+  timeOf,
+  withTime,
   type Counts,
 } from '../src/domain.js';
 
@@ -175,16 +176,20 @@ describe('occurrenceKeyFor', () => {
   });
 });
 
-describe('atMatchHour et defaultDeadlineFor', () => {
+describe('atMatchHour et withTime', () => {
   it('ramène toujours le match à midi', () => {
     expect(atMatchHour(new Date('2026-08-07T08:30:00')).getHours()).toBe(12);
   });
 
-  it('place la deadline la veille à 18h', () => {
-    const deadline = defaultDeadlineFor(new Date('2026-08-07T12:00:00'));
-    expect(deadline.getHours()).toBe(18);
-    expect(deadline.getDate()).toBe(6);
-    expect(deadline < new Date('2026-08-07T12:00:00')).toBe(true);
+  it('applique une heure « HH:MM » au jour reçu', () => {
+    const date = withTime(new Date('2026-08-07T12:00:00'), '19:30');
+    expect(date.getHours()).toBe(19);
+    expect(date.getMinutes()).toBe(30);
+    expect(date.getDate()).toBe(7);
+  });
+
+  it('timeOf est l’inverse de withTime', () => {
+    expect(timeOf(withTime(new Date('2026-08-07T12:00:00'), '09:05'))).toBe('09:05');
   });
 });
 
@@ -192,15 +197,15 @@ describe('isVotingOpen', () => {
   const futur = new Date(Date.now() + 3_600_000);
   const passe = new Date(Date.now() - 3_600_000);
 
-  it('ouvert si le statut est ouvert et la deadline à venir', () => {
-    expect(isVotingOpen({ status: 'ouvert', voteDeadline: futur })).toBe(true);
+  it('ouvert tant que le coup d’envoi est à venir', () => {
+    expect(isVotingOpen({ status: 'ouvert', matchDate: futur })).toBe(true);
   });
 
-  it('fermé une fois la deadline passée', () => {
-    expect(isVotingOpen({ status: 'ouvert', voteDeadline: passe })).toBe(false);
+  it('fermé une fois le match commencé', () => {
+    expect(isVotingOpen({ status: 'ouvert', matchDate: passe })).toBe(false);
   });
 
-  it('fermé si clôturé, même avant la deadline', () => {
-    expect(isVotingOpen({ status: 'cloture', voteDeadline: futur })).toBe(false);
+  it('fermé si l’organisateur a clôturé, même avant le match', () => {
+    expect(isVotingOpen({ status: 'cloture', matchDate: futur })).toBe(false);
   });
 });

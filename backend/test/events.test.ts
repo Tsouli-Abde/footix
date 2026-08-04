@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/db.js';
-import { inDays, resetDb } from './helpers.js';
+import { inDays, inOneHour, resetDb } from './helpers.js';
 
 const request = supertest(createApp());
 
@@ -24,12 +24,14 @@ describe('création de sondage', () => {
     expect(res.body.event.organizerToken).toBeTruthy();
   });
 
-  it('cale le match à midi et déduit la deadline par défaut', async () => {
+  it('cale le match à midi et laisse les réponses ouvertes', async () => {
     const res = await createEvent({ matchDate: inDays(7) });
     // Heure locale plutôt qu'UTC : le décalage change entre été et hiver.
     expect(new Date(res.body.event.matchDate).getHours()).toBe(12);
     expect(res.body.event.hasTime).toBe(false);
-    expect(new Date(res.body.event.voteDeadline) < new Date(res.body.event.matchDate)).toBe(true);
+    expect(res.body.event.votingOpen).toBe(true);
+    // Plus de date de fin des réponses : le coup d'envoi fait office de limite.
+    expect(res.body.event.voteDeadline).toBeUndefined();
   });
 
   it('garde l’heure quand l’organisateur en fixe une', async () => {
@@ -58,9 +60,17 @@ describe('création de sondage', () => {
     expect(clash.body.details.event.publicToken).toBe(first.body.event.publicToken);
   });
 
-  it('rejette une deadline postérieure au match', async () => {
-    const res = await createEvent({ matchDate: inDays(7), voteDeadline: inDays(8) });
-    expect(res.status).toBe(400);
+  it('laisse répondre jusqu’au coup d’envoi', async () => {
+    // Un match dans une heure : la veille à 18 h est déjà passée, l'ancienne
+    // deadline aurait fermé le sondage avant qu'il ne serve à quelque chose.
+    const res = await createEvent(inOneHour());
+    expect(res.status).toBe(201);
+    expect(res.body.event.votingOpen).toBe(true);
+
+    const answered = await request
+      .post(`/api/events/${res.body.event.publicToken}/answers`)
+      .send({ name: 'Retardataire', availability: 'oui' });
+    expect(answered.status).toBe(201);
   });
 
   it('sépare les sondages ouverts de l\'historique', async () => {

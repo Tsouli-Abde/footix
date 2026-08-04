@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor, withTime } from '../domain.js';
+import { atMatchHour, generateToken, occurrenceKeyFor, withTime } from '../domain.js';
 import { announceVoteOpen } from '../activity.js';
 import { badRequest, conflict, notFound, route } from '../http.js';
 import { createEventSchema } from '../schemas.js';
@@ -31,8 +31,8 @@ eventsRouter.get(
  * Création d'un sondage.
  *
  * Tout est optionnel sauf la date. Sans titre, c'est la date qui sert
- * d'intitulé, ça évite de répéter le même libellé à chaque semaine. Sans
- * deadline, les réponses ferment la veille à 18h.
+ * d'intitulé, ça évite de répéter le même libellé à chaque semaine. Les réponses
+ * restent ouvertes jusqu'au coup d'envoi.
  *
  * Un seul sondage par jour. S'il en existe déjà un, on répond 409 avec celui-ci
  * pour que le frontend y renvoie au lieu d'en créer un deuxième.
@@ -56,10 +56,6 @@ eventsRouter.post(
       throw conflict('Un sondage existe déjà pour ce jour', { event: serializeEventSummary(existing) });
     }
 
-    // Une deadline déjà dépassée fermerait le vote avant qu'il ne commence.
-    const voteDeadline = input.voteDeadline ?? defaultDeadlineFor(matchDate);
-    const usableDeadline = voteDeadline.getTime() > Date.now() ? voteDeadline : matchDate;
-
     const event = await prisma.event.create({
       data: {
         title: input.title?.trim() || null,
@@ -69,7 +65,6 @@ eventsRouter.post(
         hasTime: Boolean(input.matchTime),
         organizerName: input.organizerName?.trim() || null,
         occurrenceKey,
-        voteDeadline: usableDeadline,
         publicToken: generateToken(),
         organizerToken: generateToken(),
       },

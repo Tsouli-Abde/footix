@@ -193,6 +193,12 @@ export function atMatchHour(date: Date): Date {
   return result;
 }
 
+/** L'heure d'une date au format « HH:MM », l'inverse de withTime. */
+export function timeOf(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /**
  * Applique une heure « HH:MM » à un jour donné.
  * Sert quand l'organisateur veut un créneau autre que la pause déj.
@@ -202,14 +208,6 @@ export function withTime(date: Date, time: string): Date {
   const result = new Date(date);
   result.setHours(hours, minutes, 0, 0);
   return result;
-}
-
-/** Par défaut les réponses ferment la veille à 18h, ça laisse le temps de réserver. */
-export function defaultDeadlineFor(matchDate: Date): Date {
-  const deadline = new Date(matchDate);
-  deadline.setDate(deadline.getDate() - 1);
-  deadline.setHours(18, 0, 0, 0);
-  return deadline;
 }
 
 /**
@@ -246,7 +244,13 @@ export function normalizeName(name: string): string {
     .trim();
 }
 
-/** On peut répondre tant que l'organisateur n'a pas clôturé et que la deadline tient. */
-export function isVotingOpen(event: { status: string; voteDeadline: Date }, now = new Date()): boolean {
-  return event.status === 'ouvert' && event.voteDeadline.getTime() > now.getTime();
+/**
+ * On répond jusqu'au coup d'envoi.
+ *
+ * Pas de date de fin des réponses : dans les faits les gens répondent à la
+ * dernière minute, et une deadline la veille les excluait pour rien. Le seul
+ * moment où répondre n'a plus de sens, c'est quand le match a commencé.
+ */
+export function isVotingOpen(event: { status: string; matchDate: Date }, now = new Date()): boolean {
+  return event.status === 'ouvert' && event.matchDate.getTime() > now.getTime();
 }

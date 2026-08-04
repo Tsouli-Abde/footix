@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { atMatchHour, occurrenceKeyFor } from '../domain.js';
-import { badRequest, conflict, notFound, route } from '../http.js';
+import { atMatchHour, occurrenceKeyFor, timeOf, withTime } from '../domain.js';
+import { conflict, notFound, route } from '../http.js';
 import { announceClose, announceScore } from '../activity.js';
 import { closeEventSchema, resultSchema, updateEventSchema } from '../schemas.js';
 import { eventInclude, serializeEventForOrganizer, serializeEventSummary } from '../serializers.js';
@@ -33,9 +33,11 @@ manageRouter.patch(
     const event = await loadByOrganizerToken(req.params.organizerToken);
     const input = updateEventSchema.parse(req.body);
 
-    const matchDate = input.matchDate ? atMatchHour(input.matchDate) : event.matchDate;
-    const voteDeadline = input.voteDeadline ?? event.voteDeadline;
-    if (voteDeadline > matchDate) throw badRequest('La deadline doit tomber avant le match');
+    // Le jour et l'heure se modifient indépendamment : changer de jour conserve
+    // le créneau déjà fixé, et fixer une heure ne déplace pas le jour.
+    const day = input.matchDate ?? event.matchDate;
+    const time = input.matchTime === undefined ? (event.hasTime ? timeOf(event.matchDate) : null) : input.matchTime;
+    const matchDate = time ? withTime(day, time) : atMatchHour(day);
 
     const occurrenceKey = occurrenceKeyFor(matchDate);
     if (occurrenceKey !== event.occurrenceKey) {
@@ -54,7 +56,7 @@ manageRouter.patch(
         description: input.description === undefined ? undefined : input.description,
         matchDate,
         occurrenceKey,
-        voteDeadline,
+        hasTime: Boolean(time),
       },
       include: eventInclude,
     });

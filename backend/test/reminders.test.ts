@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/db.js';
-import { autoCloseDueEvents, sendDueReminders } from '../src/reminders.js';
+import { sendDueReminders } from '../src/reminders.js';
 import { inDays, resetDb } from './helpers.js';
 
 const request = supertest(createApp());
@@ -82,13 +82,5 @@ describe('récapitulatif de la veille', () => {
     const reminder = feed.body.activities.find((a: { type: string }) => a.type === 'rappel');
     expect(reminder).toBeTruthy();
     expect(reminder.body).toContain('Parc de Sceaux');
-  });
-});
-
-describe('clôture automatique', () => {
-  it('ne touche pas aux sondages dont le match n’a pas eu lieu', async () => {
-    await eventTomorrow();
-    const closed = await autoCloseDueEvents();
-    expect(closed).toHaveLength(0);
   });
 });

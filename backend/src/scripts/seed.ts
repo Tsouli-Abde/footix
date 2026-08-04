@@ -5,7 +5,7 @@
  */
 import '../env.js'; // doit rester en premier : charge .env avant tout le reste
 import { prisma } from '../db.js';
-import { atMatchHour, defaultDeadlineFor, generateToken, occurrenceKeyFor } from '../domain.js';
+import { atMatchHour, generateToken, occurrenceKeyFor } from '../domain.js';
 
 /** Le prochain vendredi à midi. */
 function nextFriday(from = new Date()): Date {
@@ -27,7 +27,6 @@ const event =
       organizerName: 'Tsouli',
       matchDate,
       occurrenceKey,
-      voteDeadline: defaultDeadlineFor(matchDate),
       publicToken: generateToken(),
       organizerToken: generateToken(),
     },

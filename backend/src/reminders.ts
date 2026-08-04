@@ -26,22 +26,19 @@ export function reminderMessage(event: EventWithParticipants): string {
   return `${reason} On part sur ${venue}.`;
 }
 
-/** Combien d'heures avant le coup d'envoi on clôture à la place de l'organisateur. */
-export const AUTO_CLOSE_HOURS_BEFORE = 3;
-
 /**
- * Clôture les sondages que personne n'a clôturés à l'approche du match.
+ * Clôture les sondages dont le match est passé, que personne n'a clôturés.
  *
- * Le lieu retenu est celui que l'app conseillait, ou rien si les réponses ne
- * permettaient pas de trancher. Volontairement silencieux : c'est un ménage
- * automatique, pas une décision, ça ne mérite pas de réveiller les téléphones.
+ * On attend le coup d'envoi et pas une minute de moins : c'est ce qui permet de
+ * répondre à la dernière minute. Le lieu retenu est celui que l'app conseillait,
+ * ou rien si les réponses ne permettaient pas de trancher.
+ *
+ * Volontairement silencieux, aucune notification : c'est un ménage automatique,
+ * pas une décision.
  */
 export async function autoCloseDueEvents(now = new Date()) {
   const events = await prisma.event.findMany({
-    where: {
-      status: 'ouvert',
-      matchDate: { lte: new Date(now.getTime() + AUTO_CLOSE_HOURS_BEFORE * HOUR_MS) },
-    },
+    where: { status: 'ouvert', matchDate: { lte: now } },
     include: eventInclude,
   });
 
